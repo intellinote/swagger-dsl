@@ -71,7 +71,7 @@ Users can start with capturing any type of data into a note, turn it
 into a task, assign it to others, start a discussion around it, add a
 file and share – with colleagues, managers, team members, customers,
 suppliers, vendors and even classmates. Since all of this is done in
-the context of Private and Public Workspaces, users retain end-to-end
+the context of private and public workspaces, users retain end-to-end
 control, visibility and security.
 
 For more information about Intellinote, visit
