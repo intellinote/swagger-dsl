@@ -264,7 +264,7 @@ assign = ()->
             op.parameters = map_to_parameters(value)
           when 'authorization','authorizations'
             if value.oauth2?
-              op.authorization = map_to_authorizations(value)
+              op.authorizations = map_to_authorizations(value)
           else
             op[name] = value
 
