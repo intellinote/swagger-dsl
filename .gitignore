@@ -1,5 +1,3 @@
-cookies.txt
-access-token.txt
 *.html
 docco
 lib-cov
@@ -14,11 +12,6 @@ hold
 *.tgz
 *.tar
 .npmrc
-config/private.json
-config/local.json
-public/api/*/api-docs.json
-public/api/*/listings/*
-!public/api/*/listings/*.coffee
 # GENERAL
 #---------------------------------------------------------------------
 $RECYCLE.BIN/
