@@ -55,17 +55,28 @@ assign = ()->
   this.status_codes =
     200:'OK'
     201:'Created'
+    202:'Accepted'
+    203:'Non-Authoritative Information'
     204:'No Content'
+    205:'Reset Content'
+    206:'Partial Content'
     401:'Unauthorized; User or application must authenticate'
     403:'Forbidden; User or applicaton is not allowed to take this action'
     404:'Not Found'
     405:'Method Not Allowed'
+    406:'Not Acceptable'
+    408:'Request Timeout'
     409:'Conflict'
+    410:'Gone'
+    413:'Request Entity Too Large'
     415:'Unsupported Media Type'
     420:'Enhance Your Calm; API rate limit exceeded'
     422:'Unprocessable Entity'
     429:'Too Many Requests; API count limit exceeded'
     500:'Server Error'
+    501:'Not Implemented'
+    502:'Bad Gateway'
+    503:'Service Unavailable'
 
   this.map_to_model = (map)=>
     model = {}
