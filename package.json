@@ -1,6 +1,6 @@
 {
   "name"        : "swagger-dsl",
-  "version"     : "0.0.1",
+  "version"     : "0.0.2",
   "description" : "CoffeeScript-based domain-specific language for generating JSON documents for Swagger.",
   "license"     : "MIT",
   "author"      : "Intellinote",
