@@ -170,25 +170,22 @@ clean-markdown:
 
 # TODO - confirm that all JSON files in config directory are valid when packaging
 
-# cp *.txt $(MODULE_DIR)
-# cp README.md $(MODULE_DIR)
-module: js test docs coverage
+# cp -r docs $(MODULE_DIR)
+module: js bin test docs coverage
 	mkdir -p $(MODULE_DIR)
-	mkdir -p $(MODULE_DIR)/logs
 	cp $(PACKAGE_JSON) $(MODULE_DIR)
 	cp -r bin $(MODULE_DIR)
-	cp -r config $(MODULE_DIR)
-	cp -r docs $(MODULE_DIR)
 	cp -r lib $(MODULE_DIR)
 	cp -r test $(MODULE_DIR)
 	cp Makefile $(MODULE_DIR)
-	cp logs/.clear $(MODULE_DIR)/logs/
+	cp *.txt $(MODULE_DIR)
+	cp README.md $(MODULE_DIR)
 	find module -type f -name "*.litcoffee-toc" -exec rm -f {} \;
 	find module -type f -name "*.md-toc" -exec rm -f {} \;
 	find module -type f -name "*.x" -exec rm -f {} \;
 
 test-module-install: clean-test-module-install js test docs coverage module
-	mkdir ../testing-module-install; cd ../testing-module-install; npm install "$(CURDIR)/module"; node -e "require('assert').ok(require('swagger-dsl'));" && cd $(CURDIR) && rm -rf ../testing-module-install && echo "It worked!"
+	mkdir ../testing-module-install; cd ../testing-module-install; npm install "$(CURDIR)/module"; node -e "require('assert').ok(require('swagger-dsl'));" && ./node_modules/.bin/swagger-dsl --help && cd $(CURDIR) && rm -rf ../testing-module-install && echo "\n\n\n<<<<<<< It worked! >>>>>>\n\n\n"
 
 $(NODE_MODULES): $(PACKAGE_JSON)
 	$(NPM_EXE) $(NPM_ARGS) prune
