@@ -12,6 +12,7 @@ hold
 *.tgz
 *.tar
 .npmrc
+bin/swagger-dsl
 # GENERAL
 #---------------------------------------------------------------------
 $RECYCLE.BIN/
