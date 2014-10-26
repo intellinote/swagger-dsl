@@ -23,7 +23,7 @@
     "test":"./node_modules/.bin/mocha -t 2000  -R list --compilers coffee:coffee-script/register ./test/test-swagger-dsl.coffee"
   },
   "bin": {
-    "mysql-runner": "./bin/swagger-dsl"
+    "swagger-dsl": "./bin/swagger-dsl"
   },
   "engines": { "node": ">=0.10" }
 }
