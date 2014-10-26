@@ -1,4 +1,4 @@
-# swagger-dsl
+# swagger-dsl [![Build Status](https://travis-ci.org/intellinote/swagger-dsl.svg?branch=master)](https://travis-ci.org/intellinote/swagger-dsl) [![Dependencies](https://david-dm.org/intellinote/swagger-dsl.svg)](https://npmjs.org/package/swagger-dsl) [![NPM version](https://badge.fury.io/js/swagger-dsl.svg)](http://badge.fury.io/js/swagger-dsl)
 
 A CoffeeScript-based domain-specific language for generating JSON documents for Swagger.
 
