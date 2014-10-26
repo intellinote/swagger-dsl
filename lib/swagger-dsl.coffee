@@ -1,82 +1,143 @@
 marked = require 'meta-marked'
 assign = ()->
 
+  # The root SwaggerUI document we are creating.
   this.rest = { }
-  this.rest.swaggerVersion = '1.2'
   this.rest.apis = []
   this.rest.models = {}
+  this.rest.swaggerVersion = '1.2'
 
-  this.path      = 'path'
-  this.query     = 'query'
-  this.body      = 'body'
-
-  this.json      = 'application/json'
-  this.multipart_form_data      = 'multipart/form-data'
-  this.html      = 'text/html'
-  this.text      = 'text/plain'
-  this.xml       = 'application/xml'
-  this.octet_stream  = 'application/octet-stream'
-  this.binary_data  = 'application/octet-stream'
-
-  this.int       = 'integer'
-  this.integer   = 'integer'
-  this.long      = 'long'
-  this.float     = 'float'
-  this.double    = 'double'
-  this.boolean   = 'boolean'
-  this.date      = 'date'
-  this.datetime  = 'date-time'
-  this.dateTime  = 'date-time'
-  this.datetime  = 'date-time'
-  this.date_time = 'date-time'
-  this.boolean   = 'boolean'
-  this.string    = 'string'
-  this.array     = 'array'
-  this.ref       = '$ref'
-  this.VOID      = 'void'
-  this.int32     = 'int32'
-  this.int64     = 'int64'
-  this.array     = 'array'
-  this.byte      = 'byte'
-  this.required  = 'required'
-
+  # **swagger_version(ver)** sets the document's `swaggerVersion` property.
   this.swagger_version = this.swaggerVersion = this.swaggerversion = (ver)=>
     rest.swaggerVersion = "#{ver}"
 
-  this.version = this.api_version = this.apiVersion= this.apiversion = (ver)=>
+  # **api_version(ver)** sets the document's `apiVersion` property.
+  this.version = this.api_version = this.apiVersion= this.apiversion = (ver="1.0")=>
     rest.apiVersion = "#{ver}"
 
+  # **base(path)** sets the document's `basePath` property.
   this.base = this.basepath = this.base_path = this.basePath = (path)=>
     rest.basePath = path
 
-  this.default_responses = this.defaultresponses = (map)=>
-    this._default_responses = map
 
+  # For "convenience", we add variables containing the string version of
+  # their name, so that (for exapmle) we can use the token `string` rather than
+  # `"string"` with the DSL.
+
+  # `paramType` values
+  this.path                = 'path'
+  this.query               = 'query'
+  this.body                = 'body'
+
+  # MIME-types
+  this.json                = 'application/json'
+  this.multipart_form_data = 'multipart/form-data'
+  this.html                = 'text/html'
+  this.text                = 'text/plain'
+  this.xml                 = 'application/xml'
+  this.octet_stream        = 'application/octet-stream'
+  this.binary_data         = 'application/octet-stream'
+
+  # `type` and `format` values
+  this.int                 = 'integer'
+  this.integer             = 'integer'
+  this.long                = 'long'
+  this.float               = 'float'
+  this.double              = 'double'
+  this.boolean             = 'boolean'
+  this.date                = 'date'
+  this.datetime            = 'date-time'
+  this.dateTime            = 'date-time'
+  this.datetime            = 'date-time'
+  this.date_time           = 'date-time'
+  this.boolean             = 'boolean'
+  this.string              = 'string'
+  this.array               = 'array'
+  this.VOID                = 'void'
+  this.int32               = 'int32'
+  this.int64               = 'int64'
+  this.array               = 'array'
+  this.byte                = 'byte'
+
+  # other
+  this.required            = 'required'
+  this.ref                 = '$ref'
+
+  # ## Status/Response Code Management
+
+  # **status_codes** is just a map of HTTP status codes
+  # and messages.
   this.status_codes =
     200:'OK'
     201:'Created'
-    202:'Accepted'
-    203:'Non-Authoritative Information'
     204:'No Content'
-    205:'Reset Content'
-    206:'Partial Content'
     401:'Unauthorized; User or application must authenticate'
     403:'Forbidden; User or applicaton is not allowed to take this action'
     404:'Not Found'
     405:'Method Not Allowed'
-    406:'Not Acceptable'
-    408:'Request Timeout'
     409:'Conflict'
-    410:'Gone'
-    413:'Request Entity Too Large'
     415:'Unsupported Media Type'
     420:'Enhance Your Calm; API rate limit exceeded'
     422:'Unprocessable Entity'
     429:'Too Many Requests; API count limit exceeded'
     500:'Server Error'
-    501:'Not Implemented'
-    502:'Bad Gateway'
-    503:'Service Unavailable'
+
+  # **standard_respones** contains a collecion of status codees
+  # and messages that will be added (by default) to the
+  # `responses` part of each operation.
+  #
+  # To override (remove) one of the standard respones on a
+  # particular operation, map the status code to something falsey.
+  this.standard_responses = this.standardresponses = (map)=>
+    this._standard_responses = map
+
+  # **_map_to_responses** generates the `responses` attribute
+  # of the Swagger document based on `status_codes`, the given
+  # `map` and the given `defaults`.
+  this._map_to_responses = (map,defaults={})=>
+    responses = []
+    map_keys = Object.keys(map)
+    default_keys = Object.keys(defaults)
+    for code,message of defaults
+      if code in map_keys
+        if Array.isArray(map[code])
+          map_msg = map[code][0]
+          map_model = map[code][1]
+        else
+          map_msg = map[code]
+          map_model = null
+        if not map_msg? or not map_msg
+          # skip it when set to null or false
+        else
+          message = "#{message}; #{map_msg}"
+          message = markdown_to_html(message,true)
+          response = { code:code, message:message }
+          if map_model?
+            response.responseModel = map_model
+          responses.push response
+      else
+        responses.push { code:code, message:message }
+    for code,message of map
+      unless code in default_keys
+        unless not message? or not message
+          if status_codes[code]?
+            if Array.isArray(message)
+              model = message[1]
+              message = message[0]
+            if typeof message is 'boolean'
+              message = status_codes[code]
+            else
+              message = "#{status_codes[code]}; #{message}"
+          message = markdown_to_html(message,true)
+          response = { code:code, message:message }
+          if model?
+            response.responseModel = model
+            model = null
+          responses.push response
+    responses = responses.sort (a,b)->(a.code ? 0) - (b.code ? 0)
+    return responses
+
+
 
   this.map_to_model = (map)=>
     model = {}
@@ -203,49 +264,6 @@ assign = ()->
         auths[type] = auth
     return auths
 
-  this.map_to_responses = (map,defaults={})=>
-    responses = []
-    map_keys = Object.keys(map)
-    default_keys = Object.keys(defaults)
-    for code,message of defaults
-      if code in map_keys
-        if Array.isArray(map[code])
-          map_msg = map[code][0]
-          map_model = map[code][1]
-        else
-          map_msg = map[code]
-          map_model = null
-        if not map_msg? or not map_msg
-          # skip it when set to null or false
-        else
-          message = "#{message}; #{map_msg}"
-          message = markdown_to_html(message,true)
-          response = { code:code, message:message }
-          if map_model?
-            response.responseModel = map_model
-          responses.push response
-      else
-        responses.push { code:code, message:message }
-    for code,message of map
-      unless code in default_keys
-        unless not message? or not message
-          if status_codes[code]?
-            if Array.isArray(message)
-              model = message[1]
-              message = message[0]
-            if typeof message is 'boolean'
-              message = status_codes[code]
-            else
-              message = "#{status_codes[code]}; #{message}"
-          message = markdown_to_html(message,true)
-          response = { code:code, message:message }
-          if model?
-            response.responseModel = model
-            model = null
-          responses.push response
-    responses = responses.sort (a,b)->(a.code ? 0) - (b.code ? 0)
-    return responses
-
   this.map_to_operation = (map)=>
     op = {}
     path = Object.keys(map)[0]
@@ -270,7 +288,7 @@ assign = ()->
           when 'nickname','deprecated'
             op[name] = value
           when 'response','responses','responseMessages'
-            op.responseMessages = map_to_responses(value,_default_responses)
+            op.responseMessages = _map_to_responses(value,_standard_responses)
           when 'parameters'
             op.parameters = map_to_parameters(value)
           when 'authorization','authorizations'
