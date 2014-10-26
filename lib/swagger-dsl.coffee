@@ -29,7 +29,6 @@ _markdown_to_html = (str,strip_p=false)=>
       str = str.substring(3,str.length-4)
   return str
 
-
 # **_map_to_responses** generates the `responses` attribute
 # of the Swagger document based on `status_codes`, the given
 # `map` and the given `defaults`.
@@ -52,7 +51,6 @@ _map_to_responses = (map,defaults={},status_codes={})=>
     responses.push response
   responses = responses.sort (a,b)->(a.code ? 0) - (b.code ? 0)
   return responses
-
 
 _map_to_model = (map)->
   model = {}
@@ -338,9 +336,81 @@ init = (self,options)->
     op.nickname ?= _alphanumerify "#{method.toLowerCase()}-#{path}"
     _add_operation(path,op)
 
+  #-------------------------------------------------------------------
+
   this.to_json = (spaces=2)->JSON.stringify(rest,null,spaces)
+
+  #-------------------------------------------------------------------
 
   return this
 
 
+_main = (argv,logfn,errfn,callback)=>
+  # set default arguments
+  if errfn? and not callback?
+    callback = errfn
+    errfn = null
+  if logfn? and not callback?
+    callback = lognf
+    logfn = null
+  argv ?= process?.argv
+  logfn ?= console.log
+  errfn ?= console.error
+  callback ?= process?.exit ? (()->)
+  # swap out process.argv so that optimist reads the parameter passed to this main function
+  original_argv = process.argv
+  process.argv = argv
+
+
+  # perform the rest of the operation in a try block so we can be
+  # sure to restore process.argv when we're finished.
+  try
+
+    CoffeeScript = require('coffee-script')
+    optimist = require('optimist')
+    fs = require('fs')
+
+    # read command line parameters using node-optimist
+    options = {
+     h: { alias: 'help', boolean:true, describe: "Show help" }
+     t: { alias: 'indent', describe:"Number of spaces per indent level. Use 0 to print on one line", default:2 }
+     o: { alias: 'out', describe:"Name of file to write to, use '-'for STDOUT.", default:'-' }
+     x: { alias: 'suffix', describe:"Extension to add to ouput files. Overrides --out.", default:null }
+     r: { alias: 'rename', describe:"Regexp/String pair describing mapping between input and output filenames. Overrides --out and --suffix.", default:null }
+    }
+    argv = optimist.usage('Usage: $0 ... [FILE(S)]',options).argv
+    # handle help
+    if argv.help
+      optimist.showHelp(errfn)
+      callback()
+    else
+      # read input files or stdin using node-argf
+      for file in argv._
+        data = fs.readFileSync(file)
+        code = "init(this)\n#{data}\nreturn to_json(#{argv.i})\n"
+        json = eval(CoffeeScript.compile(code))
+        if argv.r?
+          matches = argv.r.match /^(\/.+\/),((".+\")|(\'.+\'))$/
+          if not matches?[2]?
+            errfn "Error parsing rename pair #{argv.r}"
+            callback(1)
+            return
+          else
+            regexp = eval(matches[1])
+            string = eval(matches[2])
+            argv.o = file.replace regexp,string
+        else if argv.x?
+          argv.o = file.replace /^(.+)($)/,"$1.#{argv.x}"
+          # argv.o = "#{file}.#{argv.x}"
+        if argv.o is '-'
+          logfn json
+        else
+          fs.writeFileSync(argv.o,json)
+      callback()
+  finally
+    process.argv = original_argv
+
 module.exports = init
+
+if require.main is module
+  _main()
