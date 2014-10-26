@@ -6,6 +6,7 @@
   "author"      : "Intellinote",
   "dependencies": {
     "coffee-script"         : "latest",
+    "optimist"              : "latest",
     "marked"                : "latest"
   },
   "devDependencies": {
