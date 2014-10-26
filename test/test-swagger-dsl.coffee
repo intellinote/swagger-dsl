@@ -25,9 +25,9 @@ describe 'SwaggerDSL',->
     dsl = SwaggerDSL({})
     dsl.MODEL "Foo":
       varOne:['int','required',"The first variable"]
-      varTwo:['string']
+      varTwo:['str']
       varThree:['required','float']
-      varFour:["An array of strings",['str']]
+      varFour:["An array of strings",['string']]
     should.exist dsl.rest.models.Foo
     should.exist dsl.rest.models.Foo.properties
     should.exist dsl.rest.models.Foo.properties.varOne
