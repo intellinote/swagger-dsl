@@ -5,11 +5,12 @@
   "license"     : "MIT",
   "author"      : "Intellinote",
   "dependencies": {
+    "coffee-script"         : "latest",
     "marked"                : "latest"
   },
   "devDependencies": {
+    "browserify"       : "latest",
     "coffee-coverage"       : "latest",
-    "coffee-script"         : "latest",
     "docco"                 : "latest",
     "highlight.js"          : "latest",
     "marked-toc"            : "latest",
