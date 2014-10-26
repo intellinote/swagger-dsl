@@ -129,7 +129,7 @@ help:
 ################################################################################
 # CLEAN UP TARGETS
 
-clean: clean-coverage clean-docco clean-docs clean-js clean-module clean-test-module-install clean-node-modules
+clean: clean-coverage clean-docco clean-docs clean-js clean-module clean-test-module-install clean-node-modules clean-bin
 
 clean-test-module-install:
 	rm -rf ../testing-module-install
@@ -210,6 +210,14 @@ js: coffee $(COFFEE_JS) $(COFFEE_TEST_JS)
 .coffee.js:
 	$(COFFEE_COMPILE) $(COFFEE_COMPILE_ARGS) $<
 $(COFFEE_JS_OBJ): $(NODE_MODULES) $(COFFEE_SRCS) $(COFFEE_TEST_SRCS)
+
+coffee-bin:
+	$(foreach f,$(shell ls ./lib/swagger-dsl.coffee 2>/dev/null),chmod a+x "$(f)" && cp bin/.shebang.sh "bin/`basename $(f) | sed 's/.......$$//'`";)
+
+bin: coffee-bin
+
+clean-bin:
+	$(foreach f,$(shell ls ./lib/swagger-dsl.coffee 2>/dev/null),rm -rf "bin/`basename $(f) | sed 's/.......$$//'`";)
 
 ################################################################################
 # TEST TARGETS
