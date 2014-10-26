@@ -10,7 +10,7 @@
     "marked"                : "latest"
   },
   "devDependencies": {
-    "browserify"       : "latest",
+    "browserify"            : "latest",
     "coffee-coverage"       : "latest",
     "docco"                 : "latest",
     "highlight.js"          : "latest",
@@ -18,6 +18,12 @@
     "mocha"                 : "latest",
     "should"                : "latest"
   },
-  "scripts": { },
+  "main": "lib/swagger-dsl.js",
+  "scripts": {
+    "test":"./node_modules/.bin/mocha -t 2000  -R list --compilers coffee:coffee-script/register ./test/test-swagger-dsl.coffee"
+  },
+  "bin": {
+    "mysql-runner": "./bin/swagger-dsl"
+  },
   "engines": { "node": ">=0.10" }
 }
