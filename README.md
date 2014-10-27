@@ -2,7 +2,7 @@
 
 A CoffeeScript-based domain-specific language for generating JSON documents for Swagger.
 
-See <https://intellinote.github.io/swagger-dsl/demo/live.html> for an in-browser, interactive demonstration.
+See <http://intellinote.github.io/swagger-dsl/demo/live.html> for an in-browser, interactive demonstration.
 
 ## Licensing
 
