@@ -154,7 +154,8 @@ When processed with `swagger-dsl` (for example, by executing `swagger-dsl listin
   "swaggerVersion": "1.2",
   "apiVersion": "3.2",
   "basePath": "http://api.example.com/rest/v3.2/"
-}```
+}
+```
 
 ## Installing
 
