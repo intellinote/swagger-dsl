@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "browserify"            : "latest",
+    "uglify"                : "latest",
     "coffee-coverage"       : "latest",
     "docco"                 : "latest",
     "highlight.js"          : "latest",
