@@ -4,6 +4,77 @@ A CoffeeScript-based domain-specific language for generating JSON documents for 
 
 Work in Progress.
 
+---
+
+<div class="row"><div class="col-md-10 col-md-offset-1"><div class="lead">DSL Format (input)</div></div></div>
+<div class="row"><div class="col-md-10 col-md-offset-1"><textarea  id="dsl-in" style="width:100%" rows="12" cols="80">api_version 1.2
+base "https://api.example.com/rest/v1.1/"
+
+GET "/foo/bar/{id}":
+  summary: "Create a new FooBar object"
+  parameters:
+    id:[path,int64,required]
+  produces: json
+  returns:"FooBar"
+  responses:
+    200:true
+    404:true
+
+POST "/foo/bar":
+  summary: "Create a new FooBar object"
+  parameters:
+    foobar:[body,required,type:"FooBar"]
+  consumes: json
+  responses:
+    201:"FooBar created"
+    401:"User or application must authenticate"
+    403:"User or application not allowed to take this action"
+
+MODEL "FooBar":
+  id:[integer,required,"an example attribute"]
+  name:[string,"another attribute"]
+  bars:[[ref:"ModelBar"],"an array of 'ModelBar' objects"]</textarea></div></div><div class="row" style="margin-top:1em;"><div class="col-md-10 col-md-offset-1 center"><button id="runbtn" class="btn btn-primary">Generate JSON</button></div></div><div class="row"><div class="col-md-10 col-md-offset-1"><div class="lead">JSON Format (output)</div></div></div><div class="row"><div class="col-md-10 col-md-offset-1"><textarea  id="json-out" style="width:100%" rows="12" cols="80"></textarea></div></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+$( document ).ready(function() {
+swagger_it = function(dsl_code) {
+var code = "swagger_dsl(this);\n";
+code += dsl_code;
+code += "\nreturn to_json()\n";
+return eval(CoffeeScript.compile(code));
+};
+$("#runbtn").click( function() {
+try {
+$("#json-out")[0].value = (swagger_it(document.getElementById("dsl-in").value));
+$("#json-out").addClass("success");
+setTimeout(function(){$("#json-out").removeClass("success");},200);
+} catch(err) {
+$("#dsl-in").addClass("error");
+setTimeout(function(){$("#dsl-in").removeClass("error");},200);
+console.log(err);
+<!-- alert("Sorry, an occur occured. Please review console log for details.",err); -->
+}
+});
+});
+</script>
+<script type="text/javascript" src="http://github.com/intellinote/swagger-dsl/raw/master/demo/script.js"> </script>
+<script type="text/javascript" src="http://github.com/jashkenas/coffee-script/raw/master/extras/coffee-script.js"> </script>
+
+
+<style>
+.error { background-color: #993333; border-color:red;}
+.success { background-color: #339933; border-color:green;}
+textarea {  -webkit-transition:background-color 1s; transition:background-color 0.2s; }
+.strong { font-weight: bold;}
+.center { text-align: center; }
+textarea { font-family: consolas, inconsolatas, droid sans mono slashed, droid sans mono, monospace; font-size:10pt; }
+</style>
+
+---
+
 ## Licensing
 
 The swagger-dsl library and related documentation are made available
