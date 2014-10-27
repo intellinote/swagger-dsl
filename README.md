@@ -2,7 +2,246 @@
 
 A CoffeeScript-based domain-specific language for generating JSON documents for Swagger.
 
+## Try it Now
+
 See <http://intellinote.github.io/swagger-dsl/demo/live.html> for an in-browser, interactive demonstration.
+
+## Example
+
+Here is a Swagger-DSL-format document describing a simple REST API:
+
+```coffeescript
+swagger_version 1.2
+api_version 3.2
+base_path 'http://api.example.com/rest/v3.2/'
+
+GET '/user/{uid}':
+  summary: 'Fetch the user with the specified `uid`.'
+  returns: 'UserModel'
+  produces: json
+  parameters:
+    uid:[path,int64,required,'The user identifier']
+    include:[query,string,default:'family_name,given_name,email']
+  responses:
+    200:true
+    401:'User or application must authenticate'
+    403:'User not authorized to take this action'
+    404:'No user with the given `uid`'
+
+MODEL 'UserModel':
+  uid:         ['User identifier',int64,required]
+  given_name:  ['Last name',string]
+  family_name: ['Last name',string]
+  email:       ['Email address',required,string]
+  tel:         ['Phone numbers',[ref:'PhoneNumber']]
+
+MODEL 'PhoneNumber':
+  type: [string,enum:['home','work','mobile','other'],required]
+  number: [string,required]
+```
+
+When processed with `swagger-dsl` (for example, by executing `swagger-dsl listings/user`), the following [Swagger Specification](https://github.com/swagger-api/swagger-spec) JSON document is generated:
+
+```json
+{
+  "apis": [
+    {
+      "path": "/user/{uid}",
+      "operations": [
+        {
+          "summary": "Fetch the user with the specified <code>uid</code>.",
+          "type": "UserModel",
+          "produces": [
+            "application/json"
+          ],
+          "parameters": [
+            {
+              "name": "uid",
+              "paramType": "path",
+              "type": "integer",
+              "format": "int64",
+              "required": true,
+              "defaultValue": "The user identifier"
+            },
+            {
+              "name": "include",
+              "paramType": "query",
+              "type": "string",
+              "default": "family_name,given_name,email",
+              "required": false,
+              "format": "string"
+            }
+          ],
+          "responseMessages": [
+            {
+              "code": "200",
+              "message": "OK"
+            },
+            {
+              "code": "401",
+              "message": "Unauthorized; User or application must authenticate"
+            },
+            {
+              "code": "403",
+              "message": "Forbidden; User not authorized to take this action"
+            },
+            {
+              "code": "404",
+              "message": "Not Found; No user with the given `uid`"
+            }
+          ],
+          "method": "GET",
+          "nickname": "get__user__uid_"
+        }
+      ]
+    }
+  ],
+  "models": {
+    "UserModel": {
+      "properties": {
+        "uid": {
+          "description": "User identifier",
+          "format": "int64",
+          "type": "integer",
+          "required": true
+        },
+        "given_name": {
+          "description": "Last name",
+          "type": "string",
+          "required": false
+        },
+        "family_name": {
+          "description": "Last name",
+          "type": "string",
+          "required": false
+        },
+        "email": {
+          "description": "Email address",
+          "required": true,
+          "type": "string"
+        },
+        "tel": {
+          "description": "Phone numbers",
+          "type": "array",
+          "items": {
+            "$ref": "PhoneNumber"
+          },
+          "required": false
+        }
+      },
+      "id": "UserModel"
+    },
+    "PhoneNumber": {
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "home",
+            "work",
+            "mobile",
+            "other"
+          ],
+          "required": true
+        },
+        "number": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "id": "PhoneNumber"
+    }
+  },
+  "swaggerVersion": "1.2",
+  "apiVersion": "3.2",
+  "basePath": "http://api.example.com/rest/v3.2/"
+}```
+
+## Installing
+
+### Via npm
+
+Swagger DSL is published as [`swagger-dsl` on npm](https://www.npmjs.org/package/swagger-dsl).
+
+Hence you can install a pre-packaged version with the command:
+
+```bash
+npm install -g swagger-dsl
+```
+
+(Omit the `-g` to install swagger-dsl "locally" in the current working directory.)
+
+### From Source
+
+The source code and documentation for Swagger DSL is available on GitHub at [intellinote/swagger-dsl](https://github.com/intellinote/swagger-dsl).  You can clone the repository via:
+
+```bash
+git clone git@github.com:intellinote/swagger-dsl
+```
+
+Once you've cloned the respository, move (`cd`) into it and run:
+
+```bash
+make clean install test bin
+```
+
+in order to download and compile any external depedencies (`install`), run the unit test suite to confirm that everything was installed properly (`test`) and create the `swagger-dsl` script in the `./bin` directory (`bin`).
+
+## Using
+
+### Basics
+
+Assuming `swagger-dsl` is in your `$PATH` (it will be in `node_modules/.bin` if you installed via npm, or `./bin` if you installed from the source files) you can run:
+
+```bash
+swagger-dsl myfile.dsl
+```
+
+to generate a [Swagger Specification](https://github.com/swagger-api/swagger-spec) JSON document from the Swagger DSL file `myfile.dsl`.
+
+By default Swagger DSL will parse and execute each file you enumerate on the command line and print the resulting JSON document(s) to STDOUT.
+
+You can use:
+
+```bash
+swagger-dsl myfile.dsl -o myfile.json
+```
+
+to write the output to the specified file.
+
+### Renaming output files with `-x`
+
+You can also use:
+
+```bash
+swagger-dsl myfile.dsl -x "json"
+```
+
+to write the output to a file named `myfile.dsl.json`.  (More generally, `-x` or `--suffix` specifies an extension to add to the input file name(s) to generate output file name(s).  Hence:
+
+```bash
+swagger-dsl listings/*.dsl -x "json"
+```
+
+will process all files with the extension `.dsl` in the `listings` directory. The output from processing each file will be written to files with names that end with `.dsl.json`, also in the `listings` directory.)
+
+### Renaming output files with `-r`
+
+For greater control over the generated filenames you can use the `-r` or `--rename` command line option to specify a rule for generating output file names based on input file names.  For example:
+
+```bash
+swagger-dsl listings/*.dsl -r listings/*.dsl --rename '/^(.+)\.dsl$/,\"$1\"'
+```
+
+will change the extension from `.dsl` to `.json`.
+
+More generally, `-r` or `--rename` accepts a comma-delimited regular expression, string pair.  The regular expression will be matched against the input filename, and the string will be used to generate the output filename (by replacing `$n` with the text matching *n*th group in the regular expression).
+
+```bash
+swagger-dsl listings/*.dsl -x "json"
+```
+
+will process all files with the extension `.dsl` in the `listings` directory. The output from processing each file will be written to files with names that end with `.dsl.json`, also in the `listings` directory.)
+
 
 ## Licensing
 
