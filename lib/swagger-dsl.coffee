@@ -332,7 +332,7 @@ init = (self,options)->
   this.POST    = (map)->api_method('POST',map)
   this.PUT     = (map)->api_method('PUT',map)
   this.DELETE  = (map)->api_method('DELETE',map)
-  this.PATH    = (map)->api_method('PATCH',map)
+  this.PATCH   = (map)->api_method('PATCH',map)
   this.HEAD    = (map)->api_method('HEAD',map)
   this.OPTIONS = (map)->api_method('OPTIONS',map)
 
