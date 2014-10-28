@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # This script will run a JavaScript/CoffeeScript file of the same name found in `../lib/`.
 BASENAME="$(basename "$0")"
 if [ "$BASENAME" = ".shebang.sh" ]; then
