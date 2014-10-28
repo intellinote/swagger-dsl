@@ -277,16 +277,22 @@ init = (self,options)->
     200:'OK'
     201:'Created'
     204:'No Content'
+    400:'Bad Request'
     401:'Unauthorized' #; User or application must authenticate'
+    402:'Payment Required'
     403:'Forbidden'# ; User or applicaton is not allowed to take this action'
     404:'Not Found'
     405:'Method Not Allowed'
+    406:'Not Acceptable'
     409:'Conflict'
+    412:'Precondition Failed'
     415:'Unsupported Media Type'
     420:'Enhance Your Calm' #; API rate limit exceeded'
     422:'Unprocessable Entity'
     429:'Too Many Requests' #; API count limit exceeded'
-    500:'Server Error'
+    500:'Internal Server Error'
+    502:'Gateway Error'
+    503:'Service Unavailable'
 
   # **standard_responses** contains a collecion of status codees
   # and messages that will be added (by default) to the
