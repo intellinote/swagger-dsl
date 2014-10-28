@@ -170,13 +170,13 @@ clean-markdown:
 
 # TODO - confirm that all JSON files in config directory are valid when packaging
 
-# cp -r docs $(MODULE_DIR)
 module: js bin test docs coverage
 	mkdir -p $(MODULE_DIR)
 	cp $(PACKAGE_JSON) $(MODULE_DIR)
 	cp -r bin $(MODULE_DIR)
 	cp -r lib $(MODULE_DIR)
 	cp -r test $(MODULE_DIR)
+	cp -r docs $(MODULE_DIR)
 	cp Makefile $(MODULE_DIR)
 	cp *.txt $(MODULE_DIR)
 	cp README.md $(MODULE_DIR)
