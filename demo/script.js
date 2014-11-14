@@ -180,6 +180,7 @@
           prop[attr] = value;
         }
       }
+      prop.description = _markdown_to_html(prop.description, true);
       if (prop.required == null) {
         prop.required = false;
       }
@@ -338,6 +339,7 @@
           }
         }
       }
+      param.description = _markdown_to_html(param.description, true);
       if (param.required == null) {
         param.required = false;
       }
@@ -359,6 +361,7 @@
       auth.scopes = [];
       for (scope in scopes) {
         description = scopes[scope];
+        description = _markdown_to_html(description, true);
         auth.scopes.push({
           scope: scope,
           description: description
@@ -430,16 +433,22 @@
       200: 'OK',
       201: 'Created',
       204: 'No Content',
+      400: 'Bad Request',
       401: 'Unauthorized',
+      402: 'Payment Required',
       403: 'Forbidden',
       404: 'Not Found',
       405: 'Method Not Allowed',
+      406: 'Not Acceptable',
       409: 'Conflict',
+      412: 'Precondition Failed',
       415: 'Unsupported Media Type',
       420: 'Enhance Your Calm',
       422: 'Unprocessable Entity',
       429: 'Too Many Requests',
-      500: 'Server Error'
+      500: 'Internal Server Error',
+      502: 'Gateway Error',
+      503: 'Service Unavailable'
     };
     this.standard_responses = this.standardresponses = (function(_this) {
       return function(map) {
@@ -492,7 +501,7 @@
     this.DELETE = function(map) {
       return api_method('DELETE', map);
     };
-    this.PATH = function(map) {
+    this.PATCH = function(map) {
       return api_method('PATCH', map);
     };
     this.HEAD = function(map) {
