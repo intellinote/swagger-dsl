@@ -94,6 +94,7 @@ _map_to_model = (map)->
     else
       for attr,value of values
         prop[attr] = value
+    prop.description =  _markdown_to_html(prop.description,true)
     prop.required ?= false
     if prop.items?.ref? and not prop.items?['$ref']?
       prop.items['$ref'] = prop.items.ref
@@ -187,6 +188,7 @@ _map_to_parameters = (map)->
             param.allowMultiple = value
           else
             param[attr] = value
+    param.description =  _markdown_to_html(param.description,true)
     param.required ?= false
     param.format ?= 'string'
     params.push param
@@ -199,6 +201,7 @@ _map_to_authorizations = (map)->
     auth.type = type
     auth.scopes = []
     for scope,description of scopes
+      description = _markdown_to_html(description,true)
       auth.scopes.push {scope:scope,description:description}
       auths[type] = auth
   return auths
