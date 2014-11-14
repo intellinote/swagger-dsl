@@ -25,7 +25,7 @@ NPM_ARGS ?= --silent
 # PACKAGING ####################################################################
 PACKAGE_VERSION ?= $(shell $(NODE_EXE) -e "console.log(require('./$(PACKAGE_JSON)').version)")
 PACKAGE_NAME ?= $(shell $(NODE_EXE) -e "console.log(require('./$(PACKAGE_JSON)').name)")
-TMP_PACKAGE_DIR ?= packaging-$(PACKAGE_NAME)-$(PACKAGE_VERSION)-tmp
+TMP_PACKAGE_DIR ?= packaging-$(PACKAGE_NAME)-v$(PACKAGE_VERSION)-tmp
 PACKAGE_DIR ?= $(PACKAGE_NAME)-$(PACKAGE_VERSION)
 
 # MOCHA ########################################################################
@@ -136,6 +136,8 @@ clean-test-module-install:
 
 clean-module:
 	rm -rf $(MODULE_DIR)
+	rm -rf $(PACKAGE_DIR)
+	rm -rf $(PACKAGE_DIR).tgz
 
 clean-node-modules:
 	$(NPM_EXE) $(NPM_ARGS) prune &
@@ -177,15 +179,18 @@ module: js bin test docs coverage
 	cp -r lib $(MODULE_DIR)
 	cp -r test $(MODULE_DIR)
 	cp -r docs $(MODULE_DIR)
+	rm -rf $(MODULE_DIR)/docs/docco
 	cp Makefile $(MODULE_DIR)
 	cp *.txt $(MODULE_DIR)
 	cp README.md $(MODULE_DIR)
 	find module -type f -name "*.litcoffee-toc" -exec rm -f {} \;
 	find module -type f -name "*.md-toc" -exec rm -f {} \;
 	find module -type f -name "*.x" -exec rm -f {} \;
+	mv module $(PACKAGE_DIR)
+	tar -czf $(PACKAGE_DIR).tgz $(PACKAGE_DIR)
 
 test-module-install: clean-test-module-install js test docs coverage module
-	mkdir ../testing-module-install; cd ../testing-module-install; npm install "$(CURDIR)/module"; node -e "require('assert').ok(require('swagger-dsl'));" && ./node_modules/.bin/swagger-dsl --help && cd $(CURDIR) && rm -rf ../testing-module-install && echo "\n\n\n<<<<<<< It worked! >>>>>>\n\n\n"
+	mkdir ../testing-module-install; cd ../testing-module-install; npm install "$(CURDIR)/$(PACKAGE_DIR).tgz"; node -e "require('assert').ok(require('swagger-dsl'));" && ./node_modules/.bin/swagger-dsl --help && cd $(CURDIR) && rm -rf ../testing-module-install && echo "\n\n\n<<<<<<< It worked! >>>>>>\n\n\n"
 
 $(NODE_MODULES): $(PACKAGE_JSON)
 	$(NPM_EXE) $(NPM_ARGS) prune
