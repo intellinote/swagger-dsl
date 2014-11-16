@@ -197,13 +197,17 @@ _map_to_parameters = (map)->
 _map_to_authorizations = (map)->
   auths = {}
   for type,scopes of map
-    auth = {}
-    auth.type = type
-    auth.scopes = []
+    x = []
     for scope,description of scopes
       description = _markdown_to_html(description,true)
-      auth.scopes.push {scope:scope,description:description}
-      auths[type] = auth
+      x.push {scope:scope,description:description}
+    auths[type] = x
+    # auth.type = type
+    # auth.scopes = []
+    # for scope,description of scopes
+    #   description = _markdown_to_html(description,true)
+    #   auth.scopes.push {scope:scope,description:description}
+    #   auths[type] = auth
   return auths
 
 init = (self,options)->
