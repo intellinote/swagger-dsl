@@ -1,6 +1,6 @@
 {
   "name"        : "swagger-dsl",
-  "version"     : "0.1.2",
+  "version"     : "0.2.1",
   "description" : "CoffeeScript-based domain-specific language for generating JSON documents for Swagger.",
   "repository"  : { "type": "git", "url": "https://github.com/intellinote/swagger-dsl.git" },
   "bugs"        : { "url": "https://github.com/intellinote/swagger-dsl/issues" },
