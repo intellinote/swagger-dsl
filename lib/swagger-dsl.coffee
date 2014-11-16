@@ -48,6 +48,7 @@ _map_to_responses = (map,defaults={},status_codes={})=>
       response.message = "#{status_codes[code]}; #{response.message}"
     else if status_codes[code]?.length > 0
       response.message = status_codes[code]
+    response.message = _markdown_to_html(response.message,true)
     responses.push response
   responses = responses.sort (a,b)->(a.code ? 0) - (b.code ? 0)
   return responses
@@ -202,12 +203,6 @@ _map_to_authorizations = (map)->
       description = _markdown_to_html(description,true)
       x.push {scope:scope,description:description}
     auths[type] = x
-    # auth.type = type
-    # auth.scopes = []
-    # for scope,description of scopes
-    #   description = _markdown_to_html(description,true)
-    #   auth.scopes.push {scope:scope,description:description}
-    #   auths[type] = auth
   return auths
 
 init = (self,options)->
