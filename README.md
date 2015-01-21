@@ -106,7 +106,7 @@ When processed with `swagger-dsl` (for example, by executing `swagger-dsl listin
           "required": true
         },
         "given_name": {
-          "description": "Last name",
+          "description": "First name",
           "type": "string",
           "required": false
         },
