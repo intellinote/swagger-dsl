@@ -19,7 +19,11 @@ _remove_falsey = (a)->
       delete a[k]
   return a
 
-_alphanumerify = (str,replacement='_')=>str.replace(/[^A-Za-z0-9]/g,replacement)
+_alphanumerify = (str,replacement='_')=>
+  str = str.replace(/[^A-Za-z0-9]/g,replacement)
+  re = new RegExp("#{replacement}+","g")
+  str = str.replace(re,replacement)
+  return str
 
 _markdown_to_html = (str,strip_p=false)=>
   if str?
