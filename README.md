@@ -30,7 +30,7 @@ GET '/user/{uid}':
 
 MODEL 'UserModel':
   uid:         ['User identifier',int64,required]
-  given_name:  ['Last name',string]
+  given_name:  ['First name',string]
   family_name: ['Last name',string]
   email:       ['Email address',required,string]
   tel:         ['Phone numbers',[ref:'PhoneNumber']]
@@ -106,7 +106,7 @@ When processed with `swagger-dsl` (for example, by executing `swagger-dsl listin
           "required": true
         },
         "given_name": {
-          "description": "Last name",
+          "description": "First name",
           "type": "string",
           "required": false
         },
