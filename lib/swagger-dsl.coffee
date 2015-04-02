@@ -328,11 +328,12 @@ init = (self,options)->
       _add_model(name,props)
 
   this._add_operation = (path,op)->
-    for elt in rest.apis
-      if elt?.path is path
-        elt.operations ?= []
-        elt.operations.push op
-        return
+    # this block will roll up API methods under paths, without it each method gets its own path entry
+    # for elt in rest.apis
+    #   if elt?.path is path
+    #     elt.operations ?= []
+    #     elt.operations.push op
+    #     return
     rest.apis.push {path:path,operations:[op]}
 
   #-------------------------------------------------------------------
