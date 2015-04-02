@@ -177,15 +177,8 @@ module: js bin test docs coverage
 	cp $(PACKAGE_JSON) $(MODULE_DIR)
 	cp -r bin $(MODULE_DIR)
 	cp -r lib $(MODULE_DIR)
-	cp -r test $(MODULE_DIR)
-	cp -r docs $(MODULE_DIR)
-	rm -rf $(MODULE_DIR)/docs/docco
-	cp Makefile $(MODULE_DIR)
 	cp *.txt $(MODULE_DIR)
 	cp README.md $(MODULE_DIR)
-	find module -type f -name "*.litcoffee-toc" -exec rm -f {} \;
-	find module -type f -name "*.md-toc" -exec rm -f {} \;
-	find module -type f -name "*.x" -exec rm -f {} \;
 	mv module $(PACKAGE_DIR)
 	tar -czf $(PACKAGE_DIR).tgz $(PACKAGE_DIR)
 
