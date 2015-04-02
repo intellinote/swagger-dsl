@@ -66,12 +66,13 @@ describe 'SwaggerDSL',->
     # console.log JSON.stringify(dsl.rest)
     dsl.rest.apis[0].path.should.equal "/foo/bar"
     dsl.rest.apis[0].operations.length.should.equal 1
+    dsl.rest.apis[0].operations[0].nickname.should.equal "get_foo_bar"
     dsl.rest.apis[0].operations[0].method.should.equal "GET"
     dsl.rest.apis[0].operations[0].summary.should.equal "This is the <em>summary</em>."
     dsl.rest.apis[0].operations[0].notes.should.equal "<p><strong>THESE</strong> are the notes.</p>"
     done()
 
-  it "can add resposne codes operations",(done)->
+  it "can add response codes to operations",(done)->
     dsl = SwaggerDSL({})
     dsl.POST "/foo/bar":
       responses:
