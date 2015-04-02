@@ -241,12 +241,16 @@ init = (self,options)->
 
     # MIME-types
     this.json                = 'application/json'
+    this.pdf                 = 'application/pdf'
     this.multipart_form_data = 'multipart/form-data'
+    this.multipart           = 'multipart/form-data'
+    this.csv                 = 'text/csv'
     this.html                = 'text/html'
     this.text                = 'text/plain'
     this.xml                 = 'application/xml'
     this.octet_stream        = 'application/octet-stream'
-    this.binary_data         = 'application/octet-stream'
+    this.octet               = 'application/octet-stream'
+    this.binary              = 'application/octet-stream'
 
     # `type` and `format` values
     this.int                 = 'integer'
@@ -271,6 +275,7 @@ init = (self,options)->
 
     # other
     this.required            = 'required'
+    this.optional            = ''
     this.ref                 = '$ref'
 
   #-------------------------------------------------------------------
