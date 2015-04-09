@@ -87,7 +87,7 @@ When processed with `swagger-dsl` (for example, by executing `swagger-dsl listin
             },
             {
               "code": "404",
-              "message": "Not Found; No user with the given `uid`"
+              "message": "Not Found; No user with the given <code>uid</code>"
             }
           ],
           "method": "GET",
