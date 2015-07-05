@@ -12,7 +12,7 @@ For example, a minimal API method can be defined by:
 GET '/path':{}
 ```
 
-Typically howwever, rather than an empty map (`{}`), the method declaration will be followed by a YAML-like list of properities, as in this more complete example:.
+Typically however, rather than an empty map (`{}`), the method declaration will be followed by a YAML-like list of properities, as in this more complete example:.
 
 ```coffeescript
 POST '/team/{team_id}/member':
