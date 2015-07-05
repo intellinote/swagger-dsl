@@ -87,7 +87,7 @@ When processed with `swagger-dsl` (for example, by executing `swagger-dsl listin
             },
             {
               "code": "404",
-              "message": "Not Found; No user with the given `uid`"
+              "message": "Not Found; No user with the given <code>uid</code>"
             }
           ],
           "method": "GET",
@@ -237,11 +237,6 @@ will change the extension from `.dsl` to `.json`.
 
 More generally, `-r` or `--rename` accepts a comma-delimited regular expression, string pair.  The regular expression will be matched against the input filename, and the string will be used to generate the output filename (by replacing `$n` with the text matching *n*th group in the regular expression).
 
-```bash
-swagger-dsl listings/*.dsl -x "json"
-```
-
-will process all files with the extension `.dsl` in the `listings` directory. The output from processing each file will be written to files with names that end with `.dsl.json`, also in the `listings` directory.)
 
 
 ## Licensing
