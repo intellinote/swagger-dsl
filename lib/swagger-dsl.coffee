@@ -332,14 +332,14 @@ init = (self,options)->
       _add_model(name,props)
 
   this._add_operation = (path,op)->
+    rest.apis.push {path:path,operations:[op]}
     # this block will roll up API methods under paths, without it each method gets its own path entry
     # for elt in rest.apis
     #   if elt?.path is path
     #     elt.operations ?= []
     #     elt.operations.push op
     #     return
-    rest.apis.push {path:path,operations:[op]}
-
+    
   #-------------------------------------------------------------------
 
   # ## Operations
@@ -378,7 +378,7 @@ _main = (argv,logfn,errfn,callback)=>
   argv ?= process?.argv
   logfn ?= console.log
   errfn ?= console.error
-  callback ?= process?.exit ? (()->)
+  callback ?= process?.exit ? (()->undefined)
   # swap out process.argv so that optimist reads the parameter passed to this main function
   original_argv = process.argv
   process.argv = argv
@@ -394,11 +394,11 @@ _main = (argv,logfn,errfn,callback)=>
 
     # read command line parameters using node-optimist
     options = {
-     h: { alias: 'help', boolean:true, describe: "Show help" }
-     t: { alias: 'indent', describe:"Number of spaces per indent level. Use 0 to print on one line", default:2 }
-     o: { alias: 'out', describe:"Name of file to write to, use '-'for STDOUT.", default:'-' }
-     x: { alias: 'suffix', describe:"Extension to add to ouput files. Overrides --out.", default:null }
-     r: { alias: 'rename', describe:"Regexp/String pair describing mapping between input and output filenames. Overrides --out and --suffix.", default:null }
+      h: { alias: 'help', boolean:true, describe: "Show help" }
+      t: { alias: 'indent', describe:"Number of spaces per indent level. Use 0 to print on one line", default:2 }
+      o: { alias: 'out', describe:"Name of file to write to, use '-'for STDOUT.", default:'-' }
+      x: { alias: 'suffix', describe:"Extension to add to ouput files. Overrides --out.", default:null }
+      r: { alias: 'rename', describe:"Regexp/String pair describing mapping between input and output filenames. Overrides --out and --suffix.", default:null }
     }
     argv = optimist.usage('Usage: $0 ... [FILE(S)]',options).argv
     # handle help
