@@ -1,30 +1,21 @@
 marked = require 'marked'
 
-# "private" (not-exported) methods
-_clone = (a)->
-  b = {}
-  for k,v of a
-    b[k] = v
-  return b
-
-_merge = (a,b)->
-  c = _clone(a)
-  for k,v of b
-    c[k] = v
-  return c
-
-_remove_falsey = (a)->
-  for k,v of a
-    unless v
-      delete a[k]
-  return a
-
 _alphanumerify = (str,replacement='_')=>
   str = str.replace(/[^A-Za-z0-9]/g,replacement)
   re = new RegExp("#{replacement}+","g")
   str = str.replace(re,replacement)
   return str
-
+_to_array = (arg,split_strings = false)=>
+  if split_strings and typeof arg is 'string' and /,/.test arg
+    arg = arg.split /,/
+  if arg? and not Array.isArray(arg)
+    arg = [arg]
+  return arg
+_warn = (args...)=>console.error "WARNING:",args...
+_truthy:(v)=>/^((T(rue)?)|(Y(es)?)|(ON)|1)$/i.test("#{v}")
+_falsey:(v)=>/^((F(alse)?)|(No?)|(OFF)|0|(-1))$/i.test("#{v}")
+_is_email = (str)->/^[^@]+@[^@]+$/.test(str)
+_is_url = (str)->/^https?:\/\//i.test(str)
 _markdown_to_html = (str,strip_p=false)=>
   if str?
     str = (marked(str,{}))
@@ -33,338 +24,345 @@ _markdown_to_html = (str,strip_p=false)=>
       str = str.substring(3,str.length-4)
   return str
 
-# **_map_to_responses** generates the `responses` attribute
-# of the Swagger document based on `status_codes`, the given
-# `map` and the given `defaults`.
-_map_to_responses = (map,defaults={},status_codes={})=>
-  responses = []
-  input = _remove_falsey(_merge(defaults,map))
-  for code,v of input
-    response = { code:code }
-    if typeof v is 'string'
-      response.message = v
-    else if Array.isArray(v)
-      response.message = v[0]
-      response.responseModel = v[1]
-    else if typeof v is 'object'
-      response = _merge(response,v)
-    if typeof response.message is 'string' and response.message?.length > 0 and status_codes[code]?.length > 0
-      response.message = "#{status_codes[code]}; #{response.message}"
-    else if status_codes[code]?.length > 0
-      response.message = status_codes[code]
-    response.message = _markdown_to_html(response.message,true)
-    responses.push response
-  responses = responses.sort (a,b)->(a.code ? 0) - (b.code ? 0)
-  return responses
-
-_map_to_model = (map)->
-  model = {}
-  model.properties = {}
-  for prop_name,values of map
-    prop = {}
-    if Array.isArray(values)
-      for value in values
-        switch value
-          when 'required'
-            prop.required= true
-          when 'float','double'
-            prop.type = 'number'
-            prop.format = value
-          when 'boolean','string','integer','date'
-            prop.type = value
-          when 'int'
-            prop.type = 'integer'
-          when 'str'
-            prop.type = 'string'
-          when 'datetime','date-time','dateTime'
-            prop.type = 'string'
-            prop.format = 'date-time'
-          when 'int64','int32','long'
-            prop.format = value
-            prop.type = 'integer'
-          when 'array'
-            prop.type = 'array'
-          else
-            if Array.isArray(value)
-              prop.type = 'array'
-              if typeof value[0] is 'object'
-                prop.items = value[0]
-              else
-                prop.items = {type:value[0]}
-            else if typeof value is 'object'
-              for k,v of value
-                prop[k] = v
-            else
-              prop.description = value
-    else
-      for attr,value of values
-        prop[attr] = value
-    prop.description =  _markdown_to_html(prop.description,true)
-    prop.required ?= false
-    if prop.items?.ref? and not prop.items?['$ref']?
-      prop.items['$ref'] = prop.items.ref
-      delete prop.items.ref
-    if prop.ref? and not prop?['$ref']?
-      prop['$ref'] = prop.ref
-      delete prop.ref
-    model.properties[prop_name] = prop
-  return model
-
-_map_to_operation = (map)->
-  op = {}
-  path = Object.keys(map)[0]
-  for name,value of map[path]
-    if value?
-      switch name
-        when 'summary','notes'
-          op[name] = _markdown_to_html(value,(name is 'summary'))
-        when 'returns','type'
-          if Array.isArray(value)
-            op.type = 'array'
-            op.items = value[0]
-            if op.items.ref? and not op.items['$ref']?
-              op.items['$ref'] = op.items.ref
-              delete op.items.ref
-          else
-            op.type = value
-        when 'produces','consumes'
-          unless Array.isArray(value)
-            value = [value]
-          op[name] = value
-        when 'nickname','deprecated'
-          op[name] = value
-        when 'response','responses','responseMessages'
-          op.responseMessages = _map_to_responses(value,_standard_responses ? {}, status_codes)
-        when 'parameters'
-          op.parameters = _map_to_parameters(value)
-        when 'authorization','authorizations'
-          if value.oauth2?
-            op.authorizations = _map_to_authorizations(value)
-        else
-          op[name] = value
-  return [path,op]
-
-_map_to_parameters = (map)->
-  params = []
-  for name,values of map
-    param = {}
-    param.name = name
-    if Array.isArray(values)
-      for value in values
-        switch value
-          when 'path'
-            param.paramType = 'path'
-          when 'query','querystring','qs'
-            param.paramType = 'query'
-          when 'body'
-            param.paramType = 'body'
-          when 'required'
-            param.required= true
-          when 'float','double'
-            param.type = 'number'
-            param.format = value
-          when 'int','integer'
-            param.type = 'integer'
-          when 'int32','int64','long'
-            param.type = 'integer'
-            param.format = value
-          when 'boolean','string'
-            param.type = value
-          when 'str'
-            param.type = 'string'
-          when 'date_time','datetime','dateTime'
-            param.type = 'string'
-            param.format = 'date-time'
-          when 'date'
-            param.type = 'string'
-            param.format = 'date'
-          else
-            if typeof value is 'object' and Object.keys(value).length is 1
-              for k,v of value
-                param[k] = v
-            else
-              param.defaultValue = value
-    else
-      for attr,value of values
-        switch attr
-          when /(param-?)?type/i
-            param.paramType = value
-          when /(allow-?)?multiple/i
-            param.allowMultiple = value
-          else
-            param[attr] = value
-    param.description =  _markdown_to_html(param.description,true)
-    param.required ?= false
-    param.format ?= 'string'
-    params.push param
-  return params
-
-_map_to_authorizations = (map)->
-  auths = {}
-  for type,scopes of map
-    x = []
-    for scope,description of scopes
-      description = _markdown_to_html(description,true)
-      x.push {scope:scope,description:description}
-    auths[type] = x
-  return auths
 
 init = (self,options)->
 
-  # The root SwaggerUI document we are creating.
-  this.rest = { }
-  this.rest.apis = []
-  this.rest.models = {}
-  this.rest.swaggerVersion = '1.2'
+  this.to_json = (spaces=2)->JSON.stringify(rest,null,spaces)
 
-  # **swagger_version(ver)** sets the document's `swaggerVersion` property.
-  this.swagger_version = this.swaggerVersion = this.swaggerversion = (ver)=>
-    rest.swaggerVersion = "#{ver}"
-
-  # **api_version(ver)** sets the document's `apiVersion` property.
-  this.version = this.api_version = this.apiVersion= this.apiversion = (ver="1.0")=>
-    rest.apiVersion = "#{ver}"
-
-  # **base(path)** sets the document's `basePath` property.
-  this.base = this.basepath = this.base_path = this.basePath = (path)=>
-    rest.basePath = path
-  
-  # **resourcePath(path)** sets the document's `resourcePath` property.
-  this.resourcePath = this.resource_path = this.resourcepath = (path)=>
-    rest.resourcePath = path
-
-
-  # For "convenience", we add variables containing the string version of
-  # their name, so that (for exapmle) we can use the token `string` rather than
-  # `"string"` with the DSL.
   unless options?.strings is false
     # `paramType` values
     this.path                = 'path'
     this.query               = 'query'
     this.body                = 'body'
-
-    # MIME-types
-    this.json                = 'application/json'
-    this.pdf                 = 'application/pdf'
-    this.multipart_form_data = 'multipart/form-data'
-    this.multipart           = 'multipart/form-data'
-    this.csv                 = 'text/csv'
-    this.html                = 'text/html'
-    this.text                = 'text/plain'
-    this.xml                 = 'application/xml'
-    this.octet_stream        = 'application/octet-stream'
-    this.octet               = 'application/octet-stream'
-    this.binary              = 'application/octet-stream'
-
-    # `type` and `format` values
-    this.int                 = 'integer'
-    this.integer             = 'integer'
-    this.long                = 'long'
-    this.float               = 'float'
-    this.double              = 'double'
-    this.boolean             = 'boolean'
-    this.date                = 'date'
-    this.datetime            = 'date-time'
-    this.dateTime            = 'date-time'
-    this.datetime            = 'date-time'
-    this.date_time           = 'date-time'
-    this.boolean             = 'boolean'
-    this.string              = 'string'
-    this.array               = 'array'
-    this.VOID                = 'void'
-    this.int32               = 'int32'
-    this.int64               = 'int64'
-    this.array               = 'array'
-    this.byte                = 'byte'
-
     # other
     this.required            = 'required'
     this.optional            = ''
     this.ref                 = '$ref'
-
-  #-------------------------------------------------------------------
-
-  # ## Status/Response Code Management
-
-  # **status_codes** is just a map of HTTP status codes
-  # and messages.
-  this.status_codes = options?.status_codes ?
-    200:'OK'
-    201:'Created'
-    204:'No Content'
-    400:'Bad Request'
-    401:'Unauthorized' #; User or application must authenticate'
-    402:'Payment Required'
-    403:'Forbidden'# ; User or applicaton is not allowed to take this action'
-    404:'Not Found'
-    405:'Method Not Allowed'
-    406:'Not Acceptable'
-    409:'Conflict'
-    412:'Precondition Failed'
-    415:'Unsupported Media Type'
-    420:'Enhance Your Calm' #; API rate limit exceeded'
-    422:'Unprocessable Entity'
-    429:'Too Many Requests' #; API count limit exceeded'
-    500:'Internal Server Error'
-    502:'Gateway Error'
-    503:'Service Unavailable'
-
-  # **standard_responses** contains a collecion of status codees
-  # and messages that will be added (by default) to the
-  # `responses` part of each operation.
-  #
-  # To override (remove) one of the standard respones on a
-  # particular operation, map the status code to something falsey.
-  this.standard_responses = this.standardresponses = (map)=>
-    this._standard_responses = map
-
-  #-------------------------------------------------------------------
-
-  # ## Models
-
-  this._add_model = (name,map)->
-    map = _map_to_model(map)
-    map.id ?= name
-    rest.models[name] = map
-
-  this.MODEL = (map)->
-    for name,props of map
-      _add_model(name,props)
-
-  this._add_operation = (path,op)->
-    rest.apis.push {path:path,operations:[op]}
-    # this block will roll up API methods under paths, without it each method gets its own path entry
-    # for elt in rest.apis
-    #   if elt?.path is path
-    #     elt.operations ?= []
-    #     elt.operations.push op
-    #     return
+    this.$ref                = '$ref'
+    # MIME TYPES
+    this.MIME = {
+      JSON:'application/json'
+      XML:'application/xml'
+    }
+    # `type` and `format` values
+    this.array               = 'array'
+    this.binary              = 'binary'
+    this.boolean             = 'boolean'
+    this.byte                = 'byte'
+    this.date                = 'date'
+    this.date_time           = 'date-time'
+    this.datetime            = 'date-time'
+    this.dateTime            = 'date-time'
+    this.double              = 'double'
+    this.float               = 'float'
+    this.int                 = 'integer'
+    this.int32               = 'int32'
+    this.int64               = 'int64'
+    this.integer             = 'integer'
+    this.long                = 'long'
+    this.number              = 'number'
+    this.password            = 'password'
+    this.string              = 'string'
+    #
+    this.VOID                = 'void'
+    this.file                = 'file'
+    # licenses
+    this.Apache2 = this.APACHE2 = {
+      name: "Apache 2.0"
+      url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+    this.MIT = {
+      name: "The MIT License"
+      url: "https://opensource.org/licenses/MIT"
+    }
     
-  #-------------------------------------------------------------------
+    
+  # The root SwaggerUI document we are creating.
+  this.rest = { }
+  
+  #############################################################################
+  # ROOT LEVEL ELEMENTS
+  #############################################################################
+  
+  
+  # SWAGGER -------------------------------------------------------------------
+  this.rest.swagger = "2.0"
+  
+  this.swagger = this.swagger_version = this.swaggerVersion = this.swaggerversion = (ver)=>
+    rest.swaggerVersion = "#{ver}"
 
-  # ## Operations
+  # HOST ----------------------------------------------------------------------
+  this.host = (host)=>
+    this.rest.host = host # TODO check format to ensure that this is the host only
 
-  this.GET     = (map)->api_method('GET',map)
-  this.POST    = (map)->api_method('POST',map)
-  this.PUT     = (map)->api_method('PUT',map)
-  this.DELETE  = (map)->api_method('DELETE',map)
-  this.PATCH   = (map)->api_method('PATCH',map)
-  this.HEAD    = (map)->api_method('HEAD',map)
-  this.OPTIONS = (map)->api_method('OPTIONS',map)
+  # BASEPATH ------------------------------------------------------------------
+  this.base = this.basepath = this.base_path = this.basePath = (path)=>
+    this.rest.basePath = path
+
+  #############################################################################
+  # THE INFO OBJECT
+  #############################################################################
+  
+  this.rest.info = null
+  
+  this.title = (str)=>
+    this.rest.info ?= {}
+    this.rest.info.title = str
+    
+  this.description = (str)=>
+    this.rest.info ?= {}
+    this.rest.info.description = str
+    
+  this.terms_of_service = this.termsOfService = this.TOS = this.ToS = (str)=>
+    this.rest.info ?= {}
+    this.rest.info.termsOfService = str
+    
+  this.version = this.apiVersion = this.ApiVersion = this.APIVersion = this.APIversion = this.api_version = this.API_version = this.API_Version = this.API_VERSION = (str)=>
+    this.rest.info ?= {}
+    this.rest.info.version = "#{str}"
+    
+  this.contact = (name, url, email)=>
+    if Array.isArray(name)
+      email = name[2]
+      url = name[1]
+      name = name[0]
+    if name? and typeof name is 'object'
+      this.rest.info ?= {}
+      this.rest.info.contact = name # TODO look at fields?
+    else if (typeof name is 'string') or (typeof url is 'string') or (typeof email is 'string')
+      this.rest.info ?= {}
+      this.rest.info.contact = {}
+      for value in [name, url, email]
+        if _is_email(value)
+          this.rest.info.contact.email = value
+        else if _is_url(value)
+          this.rest.info.contact.url = value
+        else
+          this.rest.info.contact.name = value
+    else
+      _warn("Didn't expect to get here. contact(",name,",",url,",",value,") was called.")
+
+  this.license = (name, url)=>
+    if name? and typeof name is 'object'
+      this.rest.info ?= {}
+      this.rest.info.license = name # TODO look at fields?
+      if url? and typeof url is 'string'
+        this.rest.info.license.url = url
+    else if typeof name is 'string' or typeof url is 'string'
+      this.rest.info ?= {}
+      this.rest.info.license = {}
+      for value in [name, url]
+        if _is_url(value)
+          this.rest.info.license.url = value
+        else
+          this.rest.info.license.name = value
+
+  this.INFO = (map)=>
+    # optionally support "root" fields under INFO so they can use the name:value syntax
+    root_fields = [
+      "host"
+      "base"
+      "basepath"
+      "base_path"
+      "basePath"
+      "swagger"
+      "swagger_version"
+      "swaggerVersion"
+      "swaggerversion"
+    ]
+    info_fields = [
+      "title"
+      "description"
+      "terms_of_service"
+      "termsOfService"
+      "TOS"
+      "ToS"
+      "version"
+      "apiVersion"
+      "ApiVersion"
+      "APIVersion"
+      "APIversion"
+      "api_version"
+      "API_version"
+      "API_Version"
+      "API_VERSION"
+      "license"
+      "contact"
+    ]
+    for name, value of map
+      if (name in info_fields) or (name in root_fields)
+        if Array.isArray(value)  # expand arrays into arguments
+          this[name](value...)
+        else
+          this[name](value)
+      else
+        unless /^x-/.test name
+          _warn "Found an attribute named \"#{name}\" in the INFO section. According to the SwaggerUI tean, extensions should begin with \"x-\"."
+        this.rest.info ?= {}
+        this.rest.info[name] = value
+
+  #############################################################################
+  # THE PATHS OBJECT
+  #############################################################################
+    
+  this._add_operation = (method,path,op)->
+    this.rest.paths ?= {}
+    this.rest.paths[path] ?= {}
+    this.rest.paths[path][method.toLowerCase()] = op
 
   this.api_method = (method,map)->
-    [path,op] = _map_to_operation(map)
-    op.method = method
-    op.nickname ?= _alphanumerify "#{method.toLowerCase()}-#{path}"
-    _add_operation(path,op)
+    for path, attr of map
+      op = _map_to_operation(attr)
+      op.method = method
+      unless op.operationId?
+        op.operationId ?= _alphanumerify "#{method.toLowerCase()}-#{path}"
+      _add_operation(method,path,op)
 
-  #-------------------------------------------------------------------
+  # ## Operations
+  this.GET     = (map)->api_method('GET',map)
+  this.PUT     = (map)->api_method('PUT',map)
+  this.POST    = (map)->api_method('POST',map)
+  this.DELETE  = (map)->api_method('DELETE',map)
+  this.OPTIONS = (map)->api_method('OPTIONS',map)
+  this.HEAD    = (map)->api_method('HEAD',map)
+  this.PATCH   = (map)->api_method('PATCH',map)
 
-  this.to_json = (spaces=2)->JSON.stringify(rest,null,spaces)
+  # TODO: add check of valid attributes and valid values (for collectionFormat, etc.)
+  _parse_op_parameters = (value)=>
+    param = {}
+    for elt in value
+      if Array.isArray(elt)
+        param.items = _parse_op_parameters(elt)
+      else if typeof elt is 'object'
+        for k,v of elt
+          param[k] = v
+      else if typeof elt is 'string'
+        switch elt
+          when 'path', 'query', 'body'
+            param.in = elt
+          when 'required'
+            param.required = true
+          when 'string','boolean','file'
+            param.type = elt
+            param.format = undefined
+          when 'integer','int32'
+            param.type = 'integer'
+            param.format = 'int32'
+          when 'long', 'int64'
+            param.type = 'integer'
+            param.format = 'int64'
+          when 'number', 'float'
+            param.type = 'number'
+            param.format = 'float'
+          when 'double'
+            param.type = 'number'
+            param.format = 'double'
+          when 'byte','binary','date','date-time','password'
+            param.type = 'string'
+            param.format = elt
+          else
+            param.description = elt
+      else
+        console.error typeof elt, elt
+    if param.default? and param.items?
+      param.items.default ?= param.default
+      delete param.default
+    if param.type? and param.items?
+      param.items.type ?= param.type
+      delete param.type
+    if param.items?
+      param.type = 'array'
+    if (not param.type?)
+      proto = param.default ? param.enum?[0] ? param.maximum ? param.minimum
+      if proto?
+        switch (typeof proto)
+          when 'string'
+            param.type = 'string'
+          when 'number'
+            if /^-?[0-9]+/.test proto
+              param.type = 'integer'
+            else
+              param.type = 'number'
+          when 'boolean'
+            param.type = 'boolean'
+      else if param.pattern?
+        param.type = 'string'
+    return param
 
-  #-------------------------------------------------------------------
+  _map_to_operation = (map)->
+    op = {}
+    for name, value of map
+      if value?
+        switch name.toLowerCase()
+          when 'tags'
+            op.tags = _to_array(value,true).map (x)->(x?.trim())
+          when 'summary'
+            if value?.length > 120
+              _warn("The SwaggerUI team recommends that the method summary should be less than 120 characters. Found #{value.length} in \"#{value}\".")
+            op.summary = _markdown_to_html value, true
+          when 'description'
+            op.description = value # swagger now supports GFM here so no need to process as markdown
+          when 'externaldocs' # TODO
+            op.externalDocs = value # swagger now supports GFM here so no need to process as markdown
+          when 'id','operationid'
+            op.operationId = value
+          when 'produces','consumes'
+            op[name] = _to_array(value,true)
+          when 'parameters'
+            op.parameters ?= []
+            for n,v of value
+              p = _parse_op_parameters(v)
+              p.name = n
+              op.parameters.push p
+          when 'responses'
+            op.responses ?= {}
+            for n,v of value
+              if typeof v is 'string'
+                op.responses[n] = {description:v}
+              else
+                op.responses[n] = v
+          when 'security'
+            # TODO make this more convenient?
+            value = _to_array(value)
+            op.security = value
+          when 'schemes'
+            value = _to_array(value,true)
+            op.schemes = value
+            for scheme in value
+              unless value in ["http", "https", "ws", "wss"]
+                _warn("According to the SwaggerUI team, elements of \"scheme\" must be one of \"http\", \"https\", \"ws\", \"wss\". Found #{scheme} in #{value}.")
+          when 'deprecated'
+            op.deprecated = _truthy(value)
+          else
+            unless /^x-/.test name
+              _warn "Found an attribute named \"#{name}\" in the following method (operation) definition. According to the SwaggerUI tean, extensions should begin with \"x-\".", JSON.stringify(map)
+            op[name] = value
+    return op
 
-  return this
+  #############################################################################
+  # THE DEFINITIONS OBJECT
+  #############################################################################
+    
+  this._add_definition = (key,value)->
+    this.rest.definitions ?= {}
+    this.rest.definitions[key] = value
+
+  this.MODEL = this.MODELS = this.DEFINITION = this.DEFINITIONS = (map)->
+    for key,value of map
+      _add_definition(key,_map_to_model(value))
+      
+  _map_to_model = (map)->
+    model = {}
+    model.properties = {}
+    for prop_name,values of map
+      if typeof values is 'string'
+        values = [values]
+      model.properties[prop_name] = _parse_op_parameters(values)
+    if model.properties? and not model.type?
+      model.type = 'object'
+    return model
+
+  #############################################################################
 
 
 _main = (argv,logfn,errfn,callback)=>
@@ -382,7 +380,6 @@ _main = (argv,logfn,errfn,callback)=>
   # swap out process.argv so that optimist reads the parameter passed to this main function
   original_argv = process.argv
   process.argv = argv
-
 
   # perform the rest of the operation in a try block so we can be
   # sure to restore process.argv when we're finished.
@@ -407,8 +404,8 @@ _main = (argv,logfn,errfn,callback)=>
       callback()
     else
       # read input files or stdin using node-argf
-      for file in argv._
-        data = fs.readFileSync(file)
+      for f in argv._
+        data = fs.readFileSync(f)
         code = "init(this)\n#{data}\nreturn to_json(#{argv.i})\n"
         json = eval(CoffeeScript.compile(code))
         if argv.r?
@@ -418,12 +415,12 @@ _main = (argv,logfn,errfn,callback)=>
             callback(1)
             return
           else
-            regexp = eval(matches[1])
-            string = eval(matches[2])
-            argv.o = file.replace regexp,string
+            rxp = eval(matches[1])
+            str = eval(matches[2])
+            argv.o = f.replace rxp,str
         else if argv.x?
-          argv.o = file.replace /^(.+)($)/,"$1.#{argv.x}"
-          # argv.o = "#{file}.#{argv.x}"
+          argv.o = f.replace /^(.+)($)/,"$1.#{argv.x}"
+          # argv.o = "#{f}.#{argv.x}"
         if argv.o is '-'
           logfn json
         else
@@ -431,8 +428,6 @@ _main = (argv,logfn,errfn,callback)=>
       callback()
   finally
     process.argv = original_argv
-
-module.exports = init
 
 if require.main is module
   _main()

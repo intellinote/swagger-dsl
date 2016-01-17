@@ -1,3 +1,12 @@
+# IMPORTANT non-integer
+
+This branch contains a work-in-progress version of Swagger-DSL that supports the 2.0 version of Swagger.
+
+Some of the documentation may not yet be updated to reflect this new version of Swagger-DSL.
+
+
+---
+
 # swagger-dsl [![Build Status](https://travis-ci.org/intellinote/swagger-dsl.svg?branch=master)](https://travis-ci.org/intellinote/swagger-dsl) [![Dependencies](https://david-dm.org/intellinote/swagger-dsl.svg)](https://npmjs.org/package/swagger-dsl) [![NPM version](https://badge.fury.io/js/swagger-dsl.svg)](http://badge.fury.io/js/swagger-dsl)
 
 A CoffeeScript-based domain-specific language for generating JSON documents for Swagger.
