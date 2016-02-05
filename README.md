@@ -1,4 +1,4 @@
-# IMPORTANT non-integer
+# IMPORTANT
 
 This branch contains a work-in-progress version of Swagger-DSL that supports the 2.0 version of Swagger.
 
