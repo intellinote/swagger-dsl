@@ -1,5 +1,8 @@
+#coffeelint:disable=no_this
+#coffeelint:disable=missing_fat_arrows
+#coffeelint:disable=cyclomatic_complexity
 marked = require 'marked'
-
+AUGMENT_CONTENT = true
 _alphanumerify = (str,replacement='_')=>
   str = str.replace(/[^A-Za-z0-9]/g,replacement)
   re = new RegExp("#{replacement}+","g")
@@ -12,8 +15,8 @@ _to_array = (arg,split_strings = false)=>
     arg = [arg]
   return arg
 _warn = (args...)=>console.error "WARNING:",args...
-_truthy:(v)=>/^((T(rue)?)|(Y(es)?)|(ON)|1)$/i.test("#{v}")
-_falsey:(v)=>/^((F(alse)?)|(No?)|(OFF)|0|(-1))$/i.test("#{v}")
+_truthy =(v)=>/^((T(rue)?)|(Y(es)?)|(ON)|1)$/i.test("#{v}")
+_falsey =(v)=>/^((F(alse)?)|(No?)|(OFF)|0|(-1))$/i.test("#{v}")
 _is_email = (str)->/^[^@]+@[^@]+$/.test(str)
 _is_url = (str)->/^https?:\/\//i.test(str)
 _markdown_to_html = (str,strip_p=false)=>
@@ -22,12 +25,15 @@ _markdown_to_html = (str,strip_p=false)=>
     str = str?.trim()
     if strip_p and /^<p>(.*)<\/p>$/.test str
       str = str.substring(3,str.length-4)
+    # strip extraneous newlines to prevent swaggerui from markdown-ifying them into <p></p>
+    str = str.replace /((?:<\/?p>)|(?:<\/?div>)|(?:<\/?ol>)|(?:<\/?ul>)|(?:<\/?li>))\n((?:<\/?p>)|(?:<\/?div>)|(?:<\/?ol>)|(?:<\/?ul>)|(?:<\/?li>))/g,"$1$2"
+    # do it again to handle cases like `</p>\n<ul>\n<li>`
+    str = str.replace /((?:<\/?p>)|(?:<\/?div>)|(?:<\/?ol>)|(?:<\/?ul>)|(?:<\/?li>))\n((?:<\/?p>)|(?:<\/?div>)|(?:<\/?ol>)|(?:<\/?ul>)|(?:<\/?li>))/g,"$1$2"
   return str
-
 
 init = (self,options)->
 
-  this.to_json = (spaces=2)->JSON.stringify(rest,null,spaces)
+  this.to_json = (spaces=2)->JSON.stringify(this.rest,null,spaces)
 
   unless options?.strings is false
     # `paramType` values
@@ -75,25 +81,25 @@ init = (self,options)->
       name: "The MIT License"
       url: "https://opensource.org/licenses/MIT"
     }
-    
-    
+
+
   # The root SwaggerUI document we are creating.
   this.rest = { }
-  
+
   #############################################################################
   # ROOT LEVEL ELEMENTS
   #############################################################################
-  
-  
+
+
   # SWAGGER -------------------------------------------------------------------
   this.rest.swagger = "2.0"
-  
+
   this.swagger = this.swagger_version = this.swaggerVersion = this.swaggerversion = (ver)=>
-    rest.swaggerVersion = "#{ver}"
+    this.rest.swaggerVersion = "#{ver}"
 
   # HOST ----------------------------------------------------------------------
   this.host = (host)=>
-    this.rest.host = host # TODO check format to ensure that this is the host only
+    this.rest.host = host # TODO:60 check format to ensure that this is the host only
 
   # BASEPATH ------------------------------------------------------------------
   this.base = this.basepath = this.base_path = this.basePath = (path)=>
@@ -102,25 +108,25 @@ init = (self,options)->
   #############################################################################
   # THE INFO OBJECT
   #############################################################################
-  
+
   this.rest.info = null
-  
+
   this.title = (str)=>
     this.rest.info ?= {}
     this.rest.info.title = str
-    
+
   this.description = (str)=>
     this.rest.info ?= {}
     this.rest.info.description = str
-    
+
   this.terms_of_service = this.termsOfService = this.TOS = this.ToS = (str)=>
     this.rest.info ?= {}
     this.rest.info.termsOfService = str
-    
+
   this.version = this.apiVersion = this.ApiVersion = this.APIVersion = this.APIversion = this.api_version = this.API_version = this.API_Version = this.API_VERSION = (str)=>
     this.rest.info ?= {}
     this.rest.info.version = "#{str}"
-    
+
   this.contact = (name, url, email)=>
     if Array.isArray(name)
       email = name[2]
@@ -128,7 +134,7 @@ init = (self,options)->
       name = name[0]
     if name? and typeof name is 'object'
       this.rest.info ?= {}
-      this.rest.info.contact = name # TODO look at fields?
+      this.rest.info.contact = name # TODO:90 look at fields?
     else if (typeof name is 'string') or (typeof url is 'string') or (typeof email is 'string')
       this.rest.info ?= {}
       this.rest.info.contact = {}
@@ -145,7 +151,7 @@ init = (self,options)->
   this.license = (name, url)=>
     if name? and typeof name is 'object'
       this.rest.info ?= {}
-      this.rest.info.license = name # TODO look at fields?
+      this.rest.info.license = name # TODO:100 look at fields?
       if url? and typeof url is 'string'
         this.rest.info.license.url = url
     else if typeof name is 'string' or typeof url is 'string'
@@ -204,10 +210,17 @@ init = (self,options)->
   #############################################################################
   # THE PATHS OBJECT
   #############################################################################
-    
+
   this._add_operation = (method,path,op)->
     this.rest.paths ?= {}
     this.rest.paths[path] ?= {}
+    prev = this.rest.paths[path][method.toLowerCase()]
+    if prev?
+      if Array.isArray(prev)
+        prev.push op
+        op = prev
+      else
+        op = [prev,op]
     this.rest.paths[path][method.toLowerCase()] = op
 
   this.api_method = (method,map)->
@@ -216,54 +229,61 @@ init = (self,options)->
       op.method = method
       unless op.operationId?
         op.operationId ?= _alphanumerify "#{method.toLowerCase()}-#{path}"
-      _add_operation(method,path,op)
+      this._add_operation(method,path,op)
 
   # ## Operations
-  this.GET     = (map)->api_method('GET',map)
-  this.PUT     = (map)->api_method('PUT',map)
-  this.POST    = (map)->api_method('POST',map)
-  this.DELETE  = (map)->api_method('DELETE',map)
-  this.OPTIONS = (map)->api_method('OPTIONS',map)
-  this.HEAD    = (map)->api_method('HEAD',map)
-  this.PATCH   = (map)->api_method('PATCH',map)
+  this.GET     = (map)->this.api_method('GET',map)
+  this.PUT     = (map)->this.api_method('PUT',map)
+  this.POST    = (map)->this.api_method('POST',map)
+  this.DELETE  = (map)->this.api_method('DELETE',map)
+  this.OPTIONS = (map)->this.api_method('OPTIONS',map)
+  this.HEAD    = (map)->this.api_method('HEAD',map)
+  this.PATCH   = (map)->this.api_method('PATCH',map)
 
-  # TODO: add check of valid attributes and valid values (for collectionFormat, etc.)
+  # TODO:50 add check of valid attributes and valid values (for collectionFormat, etc.)
   _parse_op_parameters = (value)=>
     param = {}
-    for elt in value
-      if Array.isArray(elt)
-        param.items = _parse_op_parameters(elt)
-      else if typeof elt is 'object'
-        for k,v of elt
-          param[k] = v
-      else if typeof elt is 'string'
-        switch elt
-          when 'path', 'query', 'body'
-            param.in = elt
-          when 'required'
-            param.required = true
-          when 'string','boolean','file'
-            param.type = elt
-            param.format = undefined
-          when 'integer','int32'
-            param.type = 'integer'
-            param.format = 'int32'
-          when 'long', 'int64'
-            param.type = 'integer'
-            param.format = 'int64'
-          when 'number', 'float'
-            param.type = 'number'
-            param.format = 'float'
-          when 'double'
-            param.type = 'number'
-            param.format = 'double'
-          when 'byte','binary','date','date-time','password'
-            param.type = 'string'
-            param.format = elt
-          else
-            param.description = elt
-      else
-        console.error typeof elt, elt
+    if Array.isArray(value)
+      for elt in value
+        if Array.isArray(elt)
+          param.items = _parse_op_parameters(elt)
+        else if typeof elt is 'object'
+          for k,v of elt
+            param[k] = v
+        else if typeof elt is 'string'
+          switch elt
+            when 'path', 'query', 'body'
+              param.in = elt
+            when 'required'
+              param.required = true
+            when 'str'
+              param.type = 'string'
+              param.format = undefined
+            when 'string','boolean','file'
+              param.type = elt
+              param.format = undefined
+            when 'integer','int','int32'
+              param.type = 'integer'
+              param.format = 'int32'
+            when 'long', 'int64'
+              param.type = 'integer'
+              param.format = 'int64'
+            when 'number', 'float'
+              param.type = 'number'
+              param.format = 'float'
+            when 'double'
+              param.type = 'number'
+              param.format = 'double'
+            when 'byte','binary','date','date-time','password'
+              param.type = 'string'
+              param.format = elt
+            else
+              param.description = elt
+        else
+          console.error typeof elt, elt
+    else
+      for k,v of value
+        param[k] = v
     if param.default? and param.items?
       param.items.default ?= param.default
       delete param.default
@@ -287,6 +307,40 @@ init = (self,options)->
             param.type = 'boolean'
       else if param.pattern?
         param.type = 'string'
+    if AUGMENT_CONTENT
+      # if param.type is 'string' and param.enum?
+      #   if param.description?
+      #     param.description += "<br>"
+      #   else
+      #     param.description = ""
+      #   list = param.enum.map((x)->"'#{x}'").join(', ')
+      #   param.description += "<span class=\"text-muted\">(value in <span class=\"code\">[#{list}]</span>)</span>"
+      if param.type in ['integer','number'] and (param.maximum? or param.minimum?)
+        maxleft = maxright = minleft = minright = null
+        if param.maximum?
+          if param.exclusiveMaximum
+            maxright = "&lt;"
+            maxleft  = "&gt;"
+          else
+            maxright = "&lt;="
+            maxleft  = "&gt;="
+        if param.minimum?
+          if param.exclusiveMinimum
+            minleft = "&lt;"
+            minright  = "&gt;"
+          else
+            minleft = "&lt;="
+            minright  = "&gt;="
+        if param.description?
+          param.description += "<br>"
+        else
+          param.description = ""
+        if param.maximum? and param.minimum?
+          param.description += "(<code>#{param.minimum}&nbsp;#{minleft} value #{maxright}&nbsp;#{param.maximum}</code>)"
+        else if param.maximum? and not param.minimum?
+          param.description += "(<code>value #{maxright}&nbsp;#{param.maximum}</code>)"
+        else if param.minimum? and not param.maximum?
+          param.description += "(<code>value #{minright}&nbsp;#{param.minimum}</code>)"
     return param
 
   _map_to_operation = (map)->
@@ -301,28 +355,49 @@ init = (self,options)->
               _warn("The SwaggerUI team recommends that the method summary should be less than 120 characters. Found #{value.length} in \"#{value}\".")
             op.summary = _markdown_to_html value, true
           when 'description'
-            op.description = value # swagger now supports GFM here so no need to process as markdown
+            op.description = _markdown_to_html value # swagger now supports GFM here so no need to process as markdown
           when 'externaldocs' # TODO
-            op.externalDocs = value # swagger now supports GFM here so no need to process as markdown
-          when 'id','operationid'
+            op.externalDocs = value
+          when 'ID','id','operationid'
             op.operationId = value
           when 'produces','consumes'
             op[name] = _to_array(value,true)
           when 'parameters'
             op.parameters ?= []
-            for n,v of value
-              p = _parse_op_parameters(v)
-              p.name = n
-              op.parameters.push p
+            if Array.isArray(value)
+              for elt in value
+                for n,v of elt
+                  p = _parse_op_parameters(v)
+                  p.name = n
+                  op.parameters.push p
+            else
+              for n,v of value
+                p = _parse_op_parameters(v)
+                p.name = n
+                op.parameters.push p
           when 'responses'
             op.responses ?= {}
             for n,v of value
               if typeof v is 'string'
-                op.responses[n] = {description:v}
+                op.responses[n] ?= {}
+                op.responses[n].description = v
+              else if Array.isArray(v)
+                for elt in v
+                  if typeof elt is 'string'
+                    op.responses[n] ?= {}
+                    op.responses[n].description = elt
+                  else
+                    for n2,v2 of elt
+                      op.responses[n] ?= {}
+                      op.responses[n][n2] = v2
+              else if typeof v is 'boolean' and v is true
+                op.responses[n] ?= {}
               else
-                op.responses[n] = v
+                for n2,v2 of v
+                  op.responses[n] ?= {}
+                  op.responses[n][n2] = v2
           when 'security'
-            # TODO make this more convenient?
+            # TODO:110 make this more convenient?
             value = _to_array(value)
             op.security = value
           when 'schemes'
@@ -342,15 +417,15 @@ init = (self,options)->
   #############################################################################
   # THE DEFINITIONS OBJECT
   #############################################################################
-    
+
   this._add_definition = (key,value)->
     this.rest.definitions ?= {}
     this.rest.definitions[key] = value
 
   this.MODEL = this.MODELS = this.DEFINITION = this.DEFINITIONS = (map)->
     for key,value of map
-      _add_definition(key,_map_to_model(value))
-      
+      this._add_definition(key,_map_to_model(value))
+
   _map_to_model = (map)->
     model = {}
     model.properties = {}
@@ -360,6 +435,10 @@ init = (self,options)->
       model.properties[prop_name] = _parse_op_parameters(values)
     if model.properties? and not model.type?
       model.type = 'object'
+    for k,v of model.properties
+      if v.required
+        model.required ?= []
+        model.required.push k
     return model
 
   #############################################################################
@@ -371,7 +450,7 @@ _main = (argv,logfn,errfn,callback)=>
     callback = errfn
     errfn = null
   if logfn? and not callback?
-    callback = lognf
+    callback = logfn
     logfn = null
   argv ?= process?.argv
   logfn ?= console.log
@@ -407,7 +486,7 @@ _main = (argv,logfn,errfn,callback)=>
       for f in argv._
         data = fs.readFileSync(f)
         code = "init(this)\n#{data}\nreturn to_json(#{argv.i})\n"
-        json = eval(CoffeeScript.compile(code))
+        json = eval(CoffeeScript.compile(code)) # jshint ignore:line
         if argv.r?
           matches = argv.r.match /^(\/.+\/),((".+\")|(\'.+\'))$/
           if not matches?[2]?
@@ -431,3 +510,5 @@ _main = (argv,logfn,errfn,callback)=>
 
 if require.main is module
   _main()
+
+module.exports = init

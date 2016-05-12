@@ -8,7 +8,8 @@ SwaggerDSL = require(path.join(LIB_DIR,'swagger-dsl'))
 
 # Note that the pattern of:
 #
-#     foo = SwaggerDSL({})
+#    dsl = {}
+#    SwaggerDSL.apply(dsl)
 #
 # used in the unit tests below is different than the
 # typical way to use SwaggerDSL.  We're just doing that
@@ -22,71 +23,70 @@ SwaggerDSL = require(path.join(LIB_DIR,'swagger-dsl'))
 describe 'SwaggerDSL',->
 
   it "can create model definitions using MODEL",(done)->
-    dsl = SwaggerDSL({})
+    dsl = {}
+    SwaggerDSL.apply(dsl)
     dsl.MODEL "Foo":
       varOne:['int','required',"The first variable"]
       varTwo:['str']
       varThree:['required','float']
       varFour:["An array of strings",['string']]
-    should.exist dsl.rest.models.Foo
-    should.exist dsl.rest.models.Foo.properties
-    should.exist dsl.rest.models.Foo.properties.varOne
-    dsl.rest.models.Foo.properties.varOne.type.should.equal 'integer'
-    dsl.rest.models.Foo.properties.varOne.required.should.equal true
-    dsl.rest.models.Foo.properties.varOne.description.should.equal "The first variable"
-    should.exist dsl.rest.models.Foo.properties.varTwo
-    dsl.rest.models.Foo.properties.varTwo.type.should.equal 'string'
-    dsl.rest.models.Foo.properties.varTwo.required.should.equal false
-    should.exist dsl.rest.models.Foo.properties.varThree
-    dsl.rest.models.Foo.properties.varThree.type.should.equal 'number'
-    dsl.rest.models.Foo.properties.varThree.format.should.equal 'float'
-    dsl.rest.models.Foo.properties.varThree.required.should.equal true
-    should.exist dsl.rest.models.Foo.properties.varFour
-    dsl.rest.models.Foo.properties.varFour.type.should.equal 'array'
-    dsl.rest.models.Foo.properties.varFour.items.type.should.equal 'string'
-    dsl.rest.models.Foo.properties.varFour.description.should.equal 'An array of strings'
-    dsl.rest.models.Foo.properties.varFour.required.should.equal false
+
+    should.exist dsl.rest.definitions.Foo
+    should.exist dsl.rest.definitions.Foo.properties
+    should.exist dsl.rest.definitions.Foo.properties.varOne
+    dsl.rest.definitions.Foo.properties.varOne.type.should.equal 'integer'
+    dsl.rest.definitions.Foo.properties.varOne.required.should.equal true
+    dsl.rest.definitions.Foo.properties.varOne.description.should.equal "The first variable"
+    should.exist dsl.rest.definitions.Foo.properties.varTwo
+    dsl.rest.definitions.Foo.properties.varTwo.type.should.equal 'string'
+    should.not.exist dsl.rest.definitions.Foo.properties.varTwo.required
+    should.exist dsl.rest.definitions.Foo.properties.varThree
+    dsl.rest.definitions.Foo.properties.varThree.type.should.equal 'number'
+    dsl.rest.definitions.Foo.properties.varThree.format.should.equal 'float'
+    dsl.rest.definitions.Foo.properties.varThree.required.should.equal true
+    should.exist dsl.rest.definitions.Foo.properties.varFour
+    dsl.rest.definitions.Foo.properties.varFour.type.should.equal 'array'
+    dsl.rest.definitions.Foo.properties.varFour.items.type.should.equal 'string'
+    dsl.rest.definitions.Foo.properties.varFour.description.should.equal 'An array of strings'
+    should.not.exist dsl.rest.definitions.Foo.properties.varFour.required
     done()
 
   it "can create operation definitions using GET",(done)->
-    dsl = SwaggerDSL({})
+    dsl = {}
+    SwaggerDSL.apply(dsl)
     dsl.GET "/foo/bar":{}
-    dsl.rest.apis[0].path.should.equal "/foo/bar"
-    dsl.rest.apis[0].operations.length.should.equal 1
-    dsl.rest.apis[0].operations[0].method.should.equal "GET"
-    should.exist dsl.rest.apis[0].operations[0].nickname
+    dsl.rest.paths["/foo/bar"].should.be.ok
+    dsl.rest.paths["/foo/bar"].get.should.be.ok
+    dsl.rest.paths["/foo/bar"].get.method.should.equal "GET"
+    dsl.rest.paths["/foo/bar"].get.operationId.should.be.ok
     done()
 
   it "can add summary and notes to operations",(done)->
-    dsl = SwaggerDSL({})
+    dsl = {}
+    SwaggerDSL.apply(dsl)
     dsl.GET "/foo/bar":
       summary:"This is the *summary*."
-      notes:"**THESE** are the notes."
-    # console.log dsl.to_json()
-    # console.log JSON.stringify(dsl.rest)
-    dsl.rest.apis[0].path.should.equal "/foo/bar"
-    dsl.rest.apis[0].operations.length.should.equal 1
-    dsl.rest.apis[0].operations[0].nickname.should.equal "get_foo_bar"
-    dsl.rest.apis[0].operations[0].method.should.equal "GET"
-    dsl.rest.apis[0].operations[0].summary.should.equal "This is the <em>summary</em>."
-    dsl.rest.apis[0].operations[0].notes.should.equal "<p><strong>THESE</strong> are the notes.</p>"
+      description:"**THESE** are the notes."
+    dsl.rest.paths["/foo/bar"].should.be.ok
+    dsl.rest.paths["/foo/bar"].get.should.be.ok
+    dsl.rest.paths["/foo/bar"].get.method.should.equal "GET"
+    dsl.rest.paths["/foo/bar"].get.operationId.should.equal "get_foo_bar"
+    dsl.rest.paths["/foo/bar"].get.summary.should.equal "This is the <em>summary</em>."
+    dsl.rest.paths["/foo/bar"].get.description.should.equal "<p><strong>THESE</strong> are the notes.</p>"
     done()
 
   it "can add response codes to operations",(done)->
-    dsl = SwaggerDSL({})
+    dsl = {}
+    SwaggerDSL.apply(dsl)
     dsl.POST "/foo/bar":
       responses:
         200:true
         201:'Resource inserted'
-        403:[true,"string"]
-    dsl.rest.apis[0].path.should.equal "/foo/bar"
-    dsl.rest.apis[0].operations.length.should.equal 1
-    dsl.rest.apis[0].operations[0].method.should.equal "POST"
-    dsl.rest.apis[0].operations[0].responseMessages[0].code.should.equal '200'
-    dsl.rest.apis[0].operations[0].responseMessages[0].message.should.equal 'OK'
-    dsl.rest.apis[0].operations[0].responseMessages[1].code.should.equal '201'
-    dsl.rest.apis[0].operations[0].responseMessages[1].message.should.equal 'Created; Resource inserted'
-    dsl.rest.apis[0].operations[0].responseMessages[2].code.should.equal '403'
-    dsl.rest.apis[0].operations[0].responseMessages[2].message.should.equal 'Forbidden'
-    dsl.rest.apis[0].operations[0].responseMessages[2].responseModel.should.equal 'string'
+        403:"Forbidden"
+    dsl.rest.paths["/foo/bar"].should.be.ok
+    dsl.rest.paths["/foo/bar"].post.should.be.ok
+    dsl.rest.paths["/foo/bar"].post.method.should.equal "POST"
+    dsl.rest.paths["/foo/bar"].post.responses["200"].should.be.ok
+    dsl.rest.paths["/foo/bar"].post.responses["201"].description.should.equal "Resource inserted"
+    dsl.rest.paths["/foo/bar"].post.responses["403"].description.should.equal "Forbidden"
     done()
