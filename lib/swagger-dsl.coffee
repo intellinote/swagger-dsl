@@ -1,4 +1,6 @@
 marked = require 'marked'
+mkdirp = require 'mkdirp'
+pathLib = require 'path'
 
 # "private" (not-exported) methods
 _clone = (a)->
@@ -412,7 +414,7 @@ _main = (argv,logfn,errfn,callback)=>
         code = "init(this)\n#{data}\nreturn to_json(#{argv.i})\n"
         json = eval(CoffeeScript.compile(code))
         if argv.r?
-          matches = argv.r.match /^(\/.+\/),((".+\")|(\'.+\'))$/
+          matches = argv.r.match /^(\/.+\/),((\".+\")|(\'.+\'))$/
           if not matches?[2]?
             errfn "Error parsing rename pair #{argv.r}"
             callback(1)
@@ -427,7 +429,9 @@ _main = (argv,logfn,errfn,callback)=>
         if argv.o is '-'
           logfn json
         else
-          fs.writeFileSync(argv.o,json)
+          mkdirp(pathLib.dirname(argv.o), err ->
+            fs.writeFileSync(argv.o,json)
+          )
       callback()
   finally
     process.argv = original_argv

@@ -237,6 +237,19 @@ will change the extension from `.dsl` to `.json`.
 
 More generally, `-r` or `--rename` accepts a comma-delimited regular expression, string pair.  The regular expression will be matched against the input filename, and the string will be used to generate the output filename (by replacing `$n` with the text matching *n*th group in the regular expression).
 
+### Multiple output file
+Using `-r`, you can generate multiple json file.
+
+If you have `src/swagger` and `src/swagger2` named DSL,
+
+```bash
+swagger-dsl src/* -r /^src/,\'dest\'
+```
+
+this command output `dest/swagger` and `dest/swagger2`.
+
+
+
 
 
 ## Licensing
