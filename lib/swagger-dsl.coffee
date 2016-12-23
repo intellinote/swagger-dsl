@@ -1,5 +1,5 @@
 marked = require 'marked'
-mkdirp = require 'mkdirp'
+child_process = require 'child_process'
 pathLib = require 'path'
 
 # "private" (not-exported) methods
@@ -230,10 +230,6 @@ init = (self,options)->
   # **base(path)** sets the document's `basePath` property.
   this.base = this.basepath = this.base_path = this.basePath = (path)=>
     rest.basePath = path
-  
-  # **resourcePath(path)** sets the document's `resourcePath` property.
-  this.resourcePath = this.resource_path = this.resourcepath = (path)=>
-    rest.resourcePath = path
 
 
   # For "convenience", we add variables containing the string version of
@@ -414,7 +410,7 @@ _main = (argv,logfn,errfn,callback)=>
         code = "init(this)\n#{data}\nreturn to_json(#{argv.i})\n"
         json = eval(CoffeeScript.compile(code))
         if argv.r?
-          matches = argv.r.match /^(\/.+\/),((\".+\")|(\'.+\'))$/
+          matches = argv.r.match /^(\/.+\/),((".+\")|(\'.+\'))$/
           if not matches?[2]?
             errfn "Error parsing rename pair #{argv.r}"
             callback(1)
@@ -429,9 +425,8 @@ _main = (argv,logfn,errfn,callback)=>
         if argv.o is '-'
           logfn json
         else
-          mkdirp(pathLib.dirname(argv.o), err ->
-            fs.writeFileSync(argv.o,json)
-          )
+          child_process.execSync("mkdir -p #{pathLib.dirname(argv.o)}")
+          fs.writeFileSync(argv.o,json)
       callback()
   finally
     process.argv = original_argv

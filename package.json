@@ -14,7 +14,6 @@
   "dependencies": {
     "coffee-script": "latest",
     "marked": "latest",
-    "mkdirp": "^0.5.1",
     "optimist": "latest"
   },
   "devDependencies": {
