@@ -34,7 +34,7 @@ TEST ?= $(wildcard test/test-*.coffee)
 MOCHA_TESTS ?= $(TEST)
 MOCHA_TEST_PATTERN ?=
 MOCHA_TIMEOUT ?=-t 2000
-MOCHA_TEST_ARGS  ?= -R list --compilers coffee:coffee-script/register $(MOCHA_TIMEOUT) $(MOCHA_TEST_PATTERN)
+MOCHA_TEST_ARGS  ?= -R list --require coffee-script/register $(MOCHA_TIMEOUT) $(MOCHA_TEST_PATTERN)
 MOCHA_EXTRA_ARGS ?=
 
 # COVERAGE #####################################################################
