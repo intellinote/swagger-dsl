@@ -230,7 +230,7 @@ will process all files with the extension `.dsl` in the `listings` directory. Th
 For greater control over the generated filenames you can use the `-r` or `--rename` command line option to specify a rule for generating output file names based on input file names.  For example:
 
 ```bash
-swagger-dsl listings/*.dsl -r listings/*.dsl --rename '/^(.+)\.dsl$/,\"$1\"'
+swagger-dsl listings/*.dsl --rename '/^(.+)\.dsl$/,\"$1\"'
 ```
 
 will change the extension from `.dsl` to `.json`.
