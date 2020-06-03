@@ -1,4 +1,6 @@
 marked = require 'marked'
+child_process = require 'child_process'
+pathLib = require 'path'
 
 # "private" (not-exported) methods
 _clone = (a)->
@@ -228,10 +230,6 @@ init = (self,options)->
   # **base(path)** sets the document's `basePath` property.
   this.base = this.basepath = this.base_path = this.basePath = (path)=>
     rest.basePath = path
-  
-  # **resourcePath(path)** sets the document's `resourcePath` property.
-  this.resourcePath = this.resource_path = this.resourcepath = (path)=>
-    rest.resourcePath = path
 
 
   # For "convenience", we add variables containing the string version of
@@ -427,6 +425,7 @@ _main = (argv,logfn,errfn,callback)=>
         if argv.o is '-'
           logfn json
         else
+          child_process.execSync("mkdir -p #{pathLib.dirname(argv.o)}")
           fs.writeFileSync(argv.o,json)
       callback()
   finally
