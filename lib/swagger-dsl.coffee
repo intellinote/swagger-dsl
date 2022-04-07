@@ -1,4 +1,4 @@
-marked = require 'marked'
+marked = require('marked').parse
 
 # "private" (not-exported) methods
 _clone = (a)->
@@ -228,7 +228,7 @@ init = (self,options)->
   # **base(path)** sets the document's `basePath` property.
   this.base = this.basepath = this.base_path = this.basePath = (path)=>
     rest.basePath = path
-  
+
   # **resourcePath(path)** sets the document's `resourcePath` property.
   this.resourcePath = this.resource_path = this.resourcepath = (path)=>
     rest.resourcePath = path

@@ -1,32 +1,39 @@
 {
-  "name"        : "swagger-dsl",
-  "version"     : "0.2.2",
-  "description" : "CoffeeScript-based domain-specific language for generating JSON documents for Swagger.",
-  "repository"  : { "type": "git", "url": "https://github.com/intellinote/swagger-dsl.git" },
-  "bugs"        : { "url": "https://github.com/intellinote/swagger-dsl/issues" },
-  "license"     : "MIT",
-  "author"      : "Intellinote",
+  "name": "swagger-dsl",
+  "version": "0.2.2",
+  "description": "CoffeeScript-based domain-specific language for generating JSON documents for Swagger.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/intellinote/swagger-dsl.git"
+  },
+  "bugs": {
+    "url": "https://github.com/intellinote/swagger-dsl/issues"
+  },
+  "license": "MIT",
+  "author": "Intellinote",
   "dependencies": {
-    "coffee-script"         : "latest",
-    "optimist"              : "latest",
-    "marked"                : "latest"
+    "coffeescript": "2.6.1",
+    "optimist": "0.6.1",
+    "marked": "4"
   },
   "devDependencies": {
-    "browserify"            : "latest",
-    "uglify-js"             : "latest",
-    "coffee-coverage"       : "latest",
-    "docco"                 : "latest",
-    "highlight.js"          : "latest",
-    "marked-toc"            : "latest",
-    "mocha"                 : "latest",
-    "should"                : "latest"
+    "browserify": "latest",
+    "uglify-js": "latest",
+    "coffee-coverage": "latest",
+    "docco": "latest",
+    "highlight.js": "latest",
+    "marked-toc": "latest",
+    "mocha": "latest",
+    "should": "latest"
   },
   "main": "lib/swagger-dsl.js",
   "scripts": {
-    "test":"./node_modules/.bin/mocha -t 2000  -R list --compilers coffee:coffee-script/register ./test/test-swagger-dsl.coffee"
+    "test": "./node_modules/.bin/mocha -t 2000  -R list --compilers coffee:coffee-script/register ./test/test-swagger-dsl.coffee"
   },
   "bin": {
     "swagger-dsl": "./bin/swagger-dsl"
   },
-  "engines": { "node": ">=0.10" }
+  "engines": {
+    "node": ">=0.10"
+  }
 }
